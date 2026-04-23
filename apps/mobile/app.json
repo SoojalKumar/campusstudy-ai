@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "CampusStudy AI",
+    "slug": "campusstudy-ai",
+    "scheme": "campusstudyai",
+    "plugins": ["expo-router", "expo-secure-store"],
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#081019"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
+
