@@ -1,0 +1,16 @@
+{
+  "name": "campusstudy-ai",
+  "private": true,
+  "packageManager": "pnpm@10.8.1",
+  "scripts": {
+    "dev:web": "pnpm --filter @campusstudy/web dev",
+    "dev:mobile": "pnpm --filter @campusstudy/mobile start",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.12"
+  }
+}
+

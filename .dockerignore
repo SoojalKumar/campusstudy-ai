@@ -1,0 +1,12 @@
+.git
+node_modules
+.next
+.turbo
+.venv
+__pycache__
+.pytest_cache
+dist
+build
+coverage
+apps/mobile/.expo
+apps/api/uploads
