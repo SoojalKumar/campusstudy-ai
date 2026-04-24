@@ -155,3 +155,20 @@ def archive_material(db: Session, *, user: User, material_id: str) -> Material:
     db.commit()
     db.refresh(material)
     return material
+
+
+def list_accessible_materials(
+    db: Session,
+    *,
+    user: User,
+    course_id: str | None = None,
+    topic_id: str | None = None,
+) -> list[Material]:
+    query = db.query(Material).filter(Material.deleted_at.is_(None))
+    if user.role.value not in {"admin", "moderator"}:
+        query = query.filter(Material.owner_user_id == user.id)
+    if course_id:
+        query = query.filter(Material.course_id == course_id)
+    if topic_id:
+        query = query.filter(Material.topic_id == topic_id)
+    return query.order_by(Material.created_at.desc()).all()

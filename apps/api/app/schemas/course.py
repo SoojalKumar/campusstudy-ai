@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from app.schemas.common import CamelModel, TimestampsMixin
 
 
@@ -33,7 +35,7 @@ class CourseResponse(TimestampsMixin):
     department_name: str | None = None
     topic_count: int = 0
     material_count: int = 0
-    topics: list[TopicResponse] = []
+    topics: list[TopicResponse] = Field(default_factory=list)
 
 
 class EnrollmentRequest(CamelModel):
@@ -44,4 +46,3 @@ class EnrollmentResponse(TimestampsMixin):
     user_id: str
     course_id: str
     status: str
-

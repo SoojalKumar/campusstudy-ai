@@ -1,7 +1,7 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models.entities import FlashcardReview, Material, NoteSet, QuizAttempt, TopicMastery, User
+from app.models.entities import Course, CourseTopic, FlashcardReview, Material, NoteSet, QuizAttempt, TopicMastery, User
 from app.schemas.study import DashboardResponse, NoteSetResponse
 
 
@@ -15,15 +15,17 @@ def build_dashboard(db: Session, *, user: User) -> DashboardResponse:
         db.query(func.avg(QuizAttempt.score)).filter(QuizAttempt.user_id == user.id).scalar() or 0.0
     )
     weak_topics = (
-        db.query(TopicMastery.topic_id, TopicMastery.mastery_score)
-        .filter(TopicMastery.user_id == user.id)
+        db.query(CourseTopic.title, TopicMastery.mastery_score)
+        .join(CourseTopic, CourseTopic.id == TopicMastery.topic_id)
+        .filter(TopicMastery.user_id == user.id, TopicMastery.deleted_at.is_(None))
         .order_by(TopicMastery.mastery_score.asc())
         .limit(5)
         .all()
     )
     recent_uploads = (
-        db.query(Material)
-        .filter(Material.owner_user_id == user.id)
+        db.query(Material, Course.title.label("course_title"))
+        .join(Course, Course.id == Material.course_id)
+        .filter(Material.owner_user_id == user.id, Material.deleted_at.is_(None))
         .order_by(Material.created_at.desc())
         .limit(5)
         .all()
@@ -39,16 +41,15 @@ def build_dashboard(db: Session, *, user: User) -> DashboardResponse:
         streak_days=5,
         due_flashcards=due_flashcards,
         recent_quiz_average=round(float(recent_quiz_average), 2),
-        weak_topics=[{"topic": topic_id, "mastery": mastery} for topic_id, mastery in weak_topics],
+        weak_topics=[{"topic": topic_title, "mastery": mastery} for topic_title, mastery in weak_topics],
         recent_uploads=[
             {
                 "id": material.id,
                 "title": material.title,
                 "status": material.processing_stage.value,
-                "courseTitle": material.course_id,
+                "course_title": course_title,
             }
-            for material in recent_uploads
+            for material, course_title in recent_uploads
         ],
         latest_notes=[NoteSetResponse.model_validate(note) for note in latest_notes],
     )
-

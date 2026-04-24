@@ -36,7 +36,7 @@ class FlashcardItem(CamelModel):
     front: str
     back: str
     difficulty: Literal["easy", "medium", "hard"] = "medium"
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
     explanation: str | None = None
 
 
@@ -63,7 +63,7 @@ class FlashcardDeckResponse(TimestampsMixin):
     title: str
     source_scope: str
     metadata_json: dict
-    flashcards: list[FlashcardResponse] = []
+    flashcards: list[FlashcardResponse] = Field(default_factory=list)
 
 
 class FlashcardReviewRequest(CamelModel):
@@ -117,7 +117,7 @@ class QuizSetResponse(TimestampsMixin):
     difficulty: str
     question_count: int
     metadata_json: dict
-    questions: list[QuizQuestionResponse] = []
+    questions: list[QuizQuestionResponse] = Field(default_factory=list)
 
 
 class QuizAttemptAnswerInput(CamelModel):
@@ -128,7 +128,7 @@ class QuizAttemptAnswerInput(CamelModel):
 class QuizAttemptRequest(CamelModel):
     quiz_set_id: str
     duration_seconds: int | None = None
-    answers: list[QuizAttemptAnswerInput]
+    answers: list[QuizAttemptAnswerInput] = Field(default_factory=list)
 
 
 class QuizAttemptAnswerResponse(TimestampsMixin):
@@ -147,7 +147,7 @@ class QuizAttemptResponse(TimestampsMixin):
     correct_count: int
     completed_at: datetime
     duration_seconds: int | None
-    answers: list[QuizAttemptAnswerResponse] = []
+    answers: list[QuizAttemptAnswerResponse] = Field(default_factory=list)
 
 
 class CitationResponse(CamelModel):
@@ -179,7 +179,7 @@ class ChatMessageResponse(TimestampsMixin):
     role: str
     content: str
     metadata_json: dict
-    citations: list[CitationResponse] = []
+    citations: list[CitationResponse] = Field(default_factory=list)
 
 
 class ChatThreadResponse(TimestampsMixin):
@@ -191,7 +191,7 @@ class ChatThreadResponse(TimestampsMixin):
     scope_type: str
     strict_mode: bool
     answer_style: str
-    messages: list[ChatMessageResponse] = []
+    messages: list[ChatMessageResponse] = Field(default_factory=list)
 
 
 class NoteGenerationResult(CamelModel):
@@ -213,7 +213,6 @@ class DashboardResponse(CamelModel):
     streak_days: int
     due_flashcards: int
     recent_quiz_average: float
-    weak_topics: list[dict]
-    recent_uploads: list[dict]
-    latest_notes: list[NoteSetResponse]
-
+    weak_topics: list[dict] = Field(default_factory=list)
+    recent_uploads: list[dict] = Field(default_factory=list)
+    latest_notes: list[NoteSetResponse] = Field(default_factory=list)

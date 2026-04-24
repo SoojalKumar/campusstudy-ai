@@ -5,9 +5,29 @@ from app.core.deps import get_current_user, get_db
 from app.models.entities import MaterialChunk
 from app.providers.storage import get_storage_backend
 from app.schemas.material import MaterialChunkResponse, MaterialResponse
-from app.services.materials import archive_material, create_material_upload, get_owned_material
+from app.services.materials import (
+    archive_material,
+    create_material_upload,
+    get_owned_material,
+    list_accessible_materials,
+)
 
 router = APIRouter()
+
+
+@router.get("", response_model=list[MaterialResponse])
+def list_materials(
+    course_id: str | None = None,
+    topic_id: str | None = None,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> list[MaterialResponse]:
+    materials = list_accessible_materials(db, user=user, course_id=course_id, topic_id=topic_id)
+    storage = get_storage_backend()
+    return [
+        MaterialResponse.model_validate({**material.__dict__, "download_url": storage.presigned_url(material.storage_key)})
+        for material in materials
+    ]
 
 
 @router.post("/upload", response_model=MaterialResponse)
