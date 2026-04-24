@@ -1,10 +1,35 @@
+"use client";
+
 import { MetricCard, SectionCard } from "@campusstudy/ui";
 
 import { LayoutShell } from "@/components/layout-shell";
-import { UploadDropzone } from "@/components/upload-dropzone";
-import { demoDashboard } from "@/lib/demo-data";
+import { MaterialUploadPanel } from "@/components/material-upload-panel";
+import { demoCourses, demoDashboard } from "@/lib/demo-data";
+import { useAuthedQuery } from "@/lib/api-hooks";
+
+type DashboardResponse = typeof demoDashboard & {
+  latestNotes: Array<{ id: string; title: string; noteType: string }>;
+};
+
+type CourseResponse = (typeof demoCourses)[number];
 
 export default function DashboardPage() {
+  const dashboardQuery = useAuthedQuery<DashboardResponse>({
+    queryKey: ["dashboard"],
+    path: "/dashboard/overview",
+    fallbackData: {
+      ...demoDashboard,
+      latestNotes: []
+    }
+  });
+  const coursesQuery = useAuthedQuery<CourseResponse[]>({
+    queryKey: ["courses"],
+    path: "/courses",
+    fallbackData: demoCourses
+  });
+  const dashboard = dashboardQuery.data;
+  const courses = coursesQuery.data;
+
   return (
     <LayoutShell>
       <div className="grid gap-6">
@@ -14,22 +39,31 @@ export default function DashboardPage() {
           <p className="mt-3 max-w-2xl text-sm text-slate-300">
             Recent uploads, due flashcards, weak topics, and generated note sets live here.
           </p>
+          {!dashboardQuery.hasSession && dashboardQuery.hydrated ? (
+            <p className="mt-4 text-sm text-gold">
+              Demo data is showing right now. Sign in to pull your real dashboard and upload files.
+            </p>
+          ) : null}
           <div className="mt-6 grid gap-4 md:grid-cols-4">
-            <MetricCard label="Streak" value={`${demoDashboard.streakDays} days`} helper="Consistency score is rising." />
-            <MetricCard label="Due cards" value={`${demoDashboard.dueFlashcards}`} helper="Perfect for a mobile review sprint." />
-            <MetricCard label="Quiz avg" value={`${Math.round(demoDashboard.recentQuizAverage * 100)}%`} helper="Across the latest attempts." />
-            <MetricCard label="Weakest topic" value="Graphs" helper="Needs one more active recall cycle." />
+            <MetricCard label="Streak" value={`${dashboard.streakDays} days`} helper="Consistency score is rising." />
+            <MetricCard label="Due cards" value={`${dashboard.dueFlashcards}`} helper="Perfect for a mobile review sprint." />
+            <MetricCard label="Quiz avg" value={`${Math.round(dashboard.recentQuizAverage * 100)}%`} helper="Across the latest attempts." />
+            <MetricCard
+              label="Weakest topic"
+              value={dashboard.weakTopics[0]?.topic ?? "None"}
+              helper="Needs one more active recall cycle."
+            />
           </div>
         </section>
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <SectionCard title="Upload Materials" eyebrow="Pipeline">
-            <UploadDropzone />
+            <MaterialUploadPanel courses={courses} />
           </SectionCard>
 
           <SectionCard title="Weak Topics" eyebrow="Revision Radar">
             <div className="space-y-3">
-              {demoDashboard.weakTopics.map((item) => (
+              {dashboard.weakTopics.map((item) => (
                 <div key={item.topic} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-white">{item.topic}</p>
@@ -46,7 +80,7 @@ export default function DashboardPage() {
 
         <SectionCard title="Recent Uploads" eyebrow="Processing">
           <div className="grid gap-3">
-            {demoDashboard.recentUploads.map((upload) => (
+            {dashboard.recentUploads.map((upload) => (
               <div key={upload.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-4">
                 <div>
                   <p className="font-medium text-white">{upload.title}</p>
@@ -61,4 +95,3 @@ export default function DashboardPage() {
     </LayoutShell>
   );
 }
-
