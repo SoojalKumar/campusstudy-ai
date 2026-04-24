@@ -3,7 +3,10 @@ SHELL := /bin/zsh
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 API_DIR := $(ROOT_DIR)apps/api
 
-.PHONY: setup api-install api-dev migrate seed test lint docker-up docker-down web-dev mobile-dev
+.PHONY: preflight setup api-install api-dev migrate seed test lint docker-up docker-down web-dev mobile-dev
+
+preflight:
+	cd $(ROOT_DIR) && python3 scripts/preflight.py
 
 setup:
 	cd $(ROOT_DIR) && if [ ! -f .env ]; then cp .env.example .env; fi

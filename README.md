@@ -82,6 +82,12 @@ App-local examples also exist:
 
 ## Local setup without Docker
 
+Start with a prerequisite check:
+
+```bash
+make preflight
+```
+
 ### 1. Install workspace dependencies
 
 ```bash
@@ -237,4 +243,3 @@ pnpm --filter @campusstudy/web test
 - OCR, YouTube import, and LMS integrations
 - notifications, reminders, and analytics
 - campus-specific rollout controls and moderation flows
-
