@@ -1,3 +1,4 @@
+import React from "react";
 import type { ChatCitation } from "@campusstudy/types";
 
 export function SourceCitationCard({ citation }: { citation: ChatCitation }) {
@@ -11,4 +12,3 @@ export function SourceCitationCard({ citation }: { citation: ChatCitation }) {
     </div>
   );
 }
-
