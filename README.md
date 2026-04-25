@@ -88,6 +88,8 @@ Start with a prerequisite check:
 make preflight
 ```
 
+The preflight script reports missing tools, missing local project files, and platform-specific install hints before you start bootstrapping the workspace.
+
 ### 1. Install workspace dependencies
 
 ```bash
@@ -220,6 +222,11 @@ Web component test:
 ```bash
 pnpm --filter @campusstudy/web test
 ```
+
+CI:
+
+- GitHub Actions runs backend lint + pytest and web lint + test + build on every push to `main` and on pull requests.
+- Local `make preflight` is the fastest way to catch missing dependencies before pushing.
 
 ## Seeded demo flow
 
