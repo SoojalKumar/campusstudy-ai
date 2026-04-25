@@ -1,11 +1,12 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useSession } from "@/lib/session";
 
-const navItems = [
+const navItems: Array<{ href: Route; label: string }> = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/courses", label: "Courses" },
   { href: "/flashcards/demo", label: "Flashcards" },
@@ -64,4 +65,3 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
