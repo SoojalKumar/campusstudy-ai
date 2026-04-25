@@ -13,7 +13,7 @@ class EmbeddingType(sa.TypeDecorator[list[float]]):
         super().__init__()
         self.dimensions = dimensions
 
-    def load_dialect_impl(self, dialect: sa.Dialect) -> sa.TypeEngine[Any]:
+    def load_dialect_impl(self, dialect: sa.Dialect) -> sa.types.TypeEngine[Any]:
         if dialect.name == "postgresql":
             return dialect.type_descriptor(Vector(self.dimensions))
         return dialect.type_descriptor(sa.JSON())
@@ -33,4 +33,3 @@ class EmbeddingType(sa.TypeDecorator[list[float]]):
         if isinstance(value, str):
             return json.loads(value)
         return list(value)
-
