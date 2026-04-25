@@ -1,15 +1,35 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 
 import { apiFetch } from "@/lib/api";
 import { useSession } from "@/lib/session";
 
+type RegisterForm = {
+  email: string;
+  password: string;
+  name: string;
+  major: string;
+  semester: string;
+};
+
+const registerFields: Array<{
+  key: keyof RegisterForm;
+  placeholder: string;
+  type?: "text" | "password";
+}> = [
+  { key: "name", placeholder: "Full name" },
+  { key: "email", placeholder: "University email" },
+  { key: "password", placeholder: "Password", type: "password" },
+  { key: "major", placeholder: "Major" },
+  { key: "semester", placeholder: "Semester" }
+];
+
 export default function RegisterPage() {
   const router = useRouter();
   const { setSession } = useSession();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterForm>({
     email: "",
     password: "",
     name: "",
@@ -18,7 +38,7 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
       const response = await apiFetch<{ access_token: string; user: any }>("/auth/register", {
@@ -37,17 +57,11 @@ export default function RegisterPage() {
       <form onSubmit={onSubmit} className="w-full rounded-[2rem] border border-white/10 bg-[var(--panel)] p-8">
         <h1 className="text-3xl font-semibold text-white">Create your study workspace</h1>
         <div className="mt-6 grid gap-4">
-          {[
-            ["name", "Full name"],
-            ["email", "University email"],
-            ["password", "Password"],
-            ["major", "Major"],
-            ["semester", "Semester"]
-          ].map(([key, placeholder]) => (
+          {registerFields.map(({ key, placeholder, type = "text" }) => (
             <input
               key={key}
-              value={form[key as keyof typeof form]}
-              type={key === "password" ? "password" : "text"}
+              value={form[key]}
+              type={type}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -67,4 +81,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-
