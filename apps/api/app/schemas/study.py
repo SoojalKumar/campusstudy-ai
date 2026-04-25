@@ -209,10 +209,22 @@ class RAGAnswerResponse(CamelModel):
     citations: list[CitationResponse]
 
 
+class DashboardWeakTopicResponse(CamelModel):
+    topic: str
+    mastery: float
+
+
+class DashboardRecentUploadResponse(CamelModel):
+    id: str
+    title: str
+    status: str
+    course_title: str
+
+
 class DashboardResponse(CamelModel):
     streak_days: int
     due_flashcards: int
     recent_quiz_average: float
-    weak_topics: list[dict] = Field(default_factory=list)
-    recent_uploads: list[dict] = Field(default_factory=list)
+    weak_topics: list[DashboardWeakTopicResponse] = Field(default_factory=list)
+    recent_uploads: list[DashboardRecentUploadResponse] = Field(default_factory=list)
     latest_notes: list[NoteSetResponse] = Field(default_factory=list)
