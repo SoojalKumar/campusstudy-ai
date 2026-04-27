@@ -16,7 +16,7 @@ describe("source file helpers", () => {
 
   it("fetches protected source files with the bearer token", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(new Blob(["Binary study notes."]), {
+      new Response("Binary study notes.", {
         status: 200,
         headers: {
           "content-disposition": "attachment; filename*=UTF-8''lecture%20notes.pdf"
@@ -39,4 +39,3 @@ describe("source file helpers", () => {
     expect(await source.blob.text()).toBe("Binary study notes.");
   });
 });
-
