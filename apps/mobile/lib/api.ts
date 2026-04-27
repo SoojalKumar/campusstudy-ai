@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+const env = (globalThis as { process?: { env?: { EXPO_PUBLIC_API_BASE_URL?: string } } }).process?.env;
+const API_BASE_URL = env?.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 export async function apiFetch<T>(
   path: string,
@@ -19,4 +20,3 @@ export async function apiFetch<T>(
   }
   return response.json() as Promise<T>;
 }
-
