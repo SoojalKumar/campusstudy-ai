@@ -1,4 +1,5 @@
 from app.core.security import create_access_token
+from app.providers.storage import get_storage_backend
 from app.models.entities import CourseTopic, Material, NoteSet, QuizAttempt, QuizSet, TopicMastery
 from app.models.enums import MaterialKind, NoteType, ProcessingStage, ProcessingStatus
 
@@ -36,9 +37,37 @@ def test_material_list_only_returns_student_owned_items(client, db_session, seed
     assert payload[0]["courseId"] == seeded_data["course"].id
     assert payload[0]["fileName"] == "notes.txt"
     assert payload[0]["processingStage"] == ProcessingStage.COMPLETED.value
-    assert payload[0]["downloadUrl"]
+    assert payload[0]["downloadUrl"] == f"http://testserver/api/v1/materials/{seeded_data['material'].id}/download"
     assert "owner_user_id" not in payload[0]
     assert "processing_stage" not in payload[0]
+
+
+def test_material_download_streams_file_only_for_authorized_user(client, seeded_data):
+    storage = get_storage_backend()
+    original_bytes = b"Binary study notes."
+    storage.save_bytes(
+        key=seeded_data["material"].storage_key,
+        content=original_bytes,
+        content_type=seeded_data["material"].mime_type,
+    )
+
+    owner_response = client.get(
+        f"/api/v1/materials/{seeded_data['material'].id}/download?disposition=inline",
+        headers=bearer_for(seeded_data["owner"]),
+    )
+    other_response = client.get(
+        f"/api/v1/materials/{seeded_data['material'].id}/download",
+        headers=bearer_for(seeded_data["other"]),
+    )
+
+    assert owner_response.status_code == 200
+    assert owner_response.content == original_bytes
+    assert owner_response.headers["content-type"].startswith("text/plain")
+    assert "inline" in owner_response.headers["content-disposition"]
+    assert "notes.txt" in owner_response.headers["content-disposition"]
+    assert owner_response.headers["cache-control"] == "no-store"
+    assert owner_response.headers["x-request-id"]
+    assert other_response.status_code == 403
 
 
 def test_dashboard_overview_uses_camel_case_contract(client, db_session, seeded_data):

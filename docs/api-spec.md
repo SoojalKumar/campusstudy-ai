@@ -20,8 +20,10 @@ Base path: `/api/v1`
 
 ## Materials
 
+- `GET /materials`
 - `POST /materials/upload`
 - `GET /materials/{id}`
+- `GET /materials/{id}/download`
 - `GET /materials/{id}/status`
 - `GET /materials/{id}/chunks`
 - `DELETE /materials/{id}`
@@ -63,4 +65,3 @@ Base path: `/api/v1`
 - `POST /admin/users/{id}/disable`
 - `POST /admin/jobs/{id}/retry`
 - `GET /admin/metrics`
-

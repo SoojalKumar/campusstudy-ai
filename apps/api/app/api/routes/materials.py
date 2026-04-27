@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
@@ -15,23 +17,57 @@ from app.services.materials import (
 router = APIRouter()
 
 
+def serialize_material(material, request: Request) -> MaterialResponse:
+    payload = MaterialResponse.model_validate(material)
+    payload.download_url = str(request.url_for("download_material", material_id=material.id))
+    return payload
+
+
+def content_disposition(filename: str, disposition: str) -> str:
+    return f"{disposition}; filename*=UTF-8''{quote(filename)}"
+
+
 @router.get("", response_model=list[MaterialResponse])
 def list_materials(
+    request: Request,
     course_id: str | None = None,
     topic_id: str | None = None,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ) -> list[MaterialResponse]:
     materials = list_accessible_materials(db, user=user, course_id=course_id, topic_id=topic_id)
-    storage = get_storage_backend()
-    return [
-        MaterialResponse.model_validate({**material.__dict__, "download_url": storage.presigned_url(material.storage_key)})
-        for material in materials
-    ]
+    return [serialize_material(material, request) for material in materials]
+
+
+@router.get("/{material_id}/download", name="download_material")
+def download_material(
+    material_id: str,
+    request: Request,
+    disposition: str = "attachment",
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> Response:
+    if disposition not in {"attachment", "inline"}:
+        raise HTTPException(status_code=400, detail="Disposition must be either 'attachment' or 'inline'.")
+    material = get_owned_material(db, user=user, material_id=material_id)
+    try:
+        content = get_storage_backend().load_bytes(material.storage_key)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Stored file not found.") from exc
+    return Response(
+        content=content,
+        media_type=material.mime_type,
+        headers={
+            "Content-Disposition": content_disposition(material.file_name, disposition),
+            "Cache-Control": "no-store",
+            "X-Request-ID": request.state.request_id if hasattr(request.state, "request_id") else "",
+        },
+    )
 
 
 @router.post("/upload", response_model=MaterialResponse)
 def upload_material(
+    request: Request,
     course_id: str = Form(...),
     title: str = Form(...),
     topic_id: str | None = Form(default=None),
@@ -47,24 +83,28 @@ def upload_material(
         title=title,
         file=file,
     )
-    payload = MaterialResponse.model_validate(material)
-    payload.download_url = get_storage_backend().presigned_url(material.storage_key)
-    return payload
+    return serialize_material(material, request)
 
 
 @router.get("/{material_id}", response_model=MaterialResponse)
-def get_material(material_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)) -> MaterialResponse:
+def get_material(
+    material_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> MaterialResponse:
     material = get_owned_material(db, user=user, material_id=material_id)
-    payload = MaterialResponse.model_validate(material)
-    payload.download_url = get_storage_backend().presigned_url(material.storage_key)
-    return payload
+    return serialize_material(material, request)
 
 
 @router.get("/{material_id}/status", response_model=MaterialResponse)
 def get_material_status(
-    material_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)
+    material_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ) -> MaterialResponse:
-    return get_material(material_id=material_id, db=db, user=user)
+    return get_material(material_id=material_id, request=request, db=db, user=user)
 
 
 @router.get("/{material_id}/chunks", response_model=list[MaterialChunkResponse])

@@ -30,6 +30,7 @@ app.add_middleware(
 @app.middleware("http")
 async def request_context(request: Request, call_next):
     request_id = request.headers.get(settings.request_id_header) or str(uuid4())
+    request.state.request_id = request_id
     try:
         response = await call_next(request)
     except Exception as exc:
@@ -42,4 +43,3 @@ if settings.auto_create_schema:
     Base.metadata.create_all(bind=engine)
 
 app.include_router(api_router, prefix=settings.api_prefix)
-
