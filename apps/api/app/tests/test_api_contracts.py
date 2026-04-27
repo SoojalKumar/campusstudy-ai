@@ -1,6 +1,14 @@
 from app.core.security import create_access_token
 from app.providers.storage import get_storage_backend
-from app.models.entities import CourseTopic, Material, NoteSet, QuizAttempt, QuizSet, TopicMastery
+from app.models.entities import (
+    CourseTopic,
+    Material,
+    NoteSet,
+    ProcessingJob,
+    QuizAttempt,
+    QuizSet,
+    TopicMastery,
+)
 from app.models.enums import MaterialKind, NoteType, ProcessingStage, ProcessingStatus
 
 
@@ -68,6 +76,50 @@ def test_material_download_streams_file_only_for_authorized_user(client, seeded_
     assert owner_response.headers["cache-control"] == "no-store"
     assert owner_response.headers["x-request-id"]
     assert other_response.status_code == 403
+
+
+def test_material_upload_creates_processing_job(client, db_session, seeded_data, monkeypatch):
+    saved_files: dict[str, bytes] = {}
+    queued_jobs: list[tuple[str, str]] = []
+
+    class FakeStorageBackend:
+        def save_bytes(self, *, key: str, content: bytes, content_type: str) -> str:
+            saved_files[key] = content
+            return key
+
+        def load_bytes(self, key: str) -> bytes:
+            return saved_files[key]
+
+        def delete(self, key: str) -> None:
+            saved_files.pop(key, None)
+
+        def presigned_url(self, key: str) -> str:
+            return f"/fake-storage/{key}"
+
+    class FakePipelineTask:
+        def delay(self, material_id: str, job_id: str) -> None:
+            queued_jobs.append((material_id, job_id))
+
+    monkeypatch.setattr("app.services.materials.get_storage_backend", lambda: FakeStorageBackend())
+    monkeypatch.setattr("app.services.materials.scan_file", lambda path: None)
+    monkeypatch.setattr("app.services.materials.process_material_pipeline", FakePipelineTask())
+
+    response = client.post(
+        "/api/v1/materials/upload",
+        headers=bearer_for(seeded_data["owner"]),
+        data={"course_id": seeded_data["course"].id, "title": "Lecture 2 Notes"},
+        files={"file": ("lecture-2.md", b"# Lecture 2\nStudy pipeline notes.", "text/markdown")},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    material = db_session.query(Material).filter(Material.id == payload["id"]).one()
+    job = db_session.query(ProcessingJob).filter(ProcessingJob.material_id == material.id).one()
+
+    assert material.processing_status == ProcessingStatus.PENDING
+    assert material.processing_stage == ProcessingStage.UPLOADED
+    assert saved_files[material.storage_key] == b"# Lecture 2\nStudy pipeline notes."
+    assert queued_jobs == [(material.id, job.id)]
 
 
 def test_dashboard_overview_uses_camel_case_contract(client, db_session, seeded_data):
