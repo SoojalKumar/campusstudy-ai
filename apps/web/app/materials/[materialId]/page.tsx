@@ -9,7 +9,11 @@ import { useAuthedQuery } from "@/lib/api-hooks";
 type MaterialResponse = {
   id: string;
   title: string;
+  fileName: string;
+  mimeType: string;
   processingStage: string;
+  processingStatus: string;
+  downloadUrl?: string | null;
   extractedText?: string | null;
   transcriptText?: string | null;
 };
@@ -36,6 +40,17 @@ type ChunkResponse = {
   endSecond?: number | null;
 };
 
+function formatSeconds(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function withDisposition(url: string | null | undefined, disposition: "inline" | "attachment") {
+  if (!url) return null;
+  return `${url}${url.includes("?") ? "&" : "?"}disposition=${disposition}`;
+}
+
 export default function MaterialDetailPage() {
   const params = useParams<{ materialId: string }>();
   const materialId = params.materialId;
@@ -45,7 +60,11 @@ export default function MaterialDetailPage() {
     fallbackData: {
       id: materialId,
       title: `Material ${materialId}`,
+      fileName: "demo-material.txt",
+      mimeType: "text/plain",
       processingStage: "completed",
+      processingStatus: "completed",
+      downloadUrl: null,
       extractedText: null,
       transcriptText: null
     }
@@ -78,6 +97,10 @@ export default function MaterialDetailPage() {
             : "Chunk",
     snippet: chunk.text.slice(0, 220)
   }));
+  const inlineSourceUrl = withDisposition(material.downloadUrl, "inline");
+  const downloadSourceUrl = withDisposition(material.downloadUrl, "attachment");
+  const sourcePreviewText = material.transcriptText || material.extractedText;
+  const supportsTimestampLinks = material.mimeType.startsWith("audio/") || material.mimeType.startsWith("video/");
 
   return (
     <LayoutShell>
@@ -85,14 +108,58 @@ export default function MaterialDetailPage() {
         <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-6">
           <p className="text-xs uppercase tracking-[0.35em] text-gold">Material Detail</p>
           <h1 className="mt-3 text-3xl font-semibold text-white">{material.title}</h1>
-          <p className="mt-3 text-sm text-slate-400">Pipeline stage: {material.processingStage}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-300">
+            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">{material.fileName}</span>
+            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">{material.mimeType}</span>
+            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">
+              Stage: {material.processingStage}
+            </span>
+            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">
+              Status: {material.processingStatus}
+            </span>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {inlineSourceUrl ? (
+              <a
+                href={inlineSourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+              >
+                Open original source
+              </a>
+            ) : null}
+            {downloadSourceUrl ? (
+              <a
+                href={downloadSourceUrl}
+                className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950"
+              >
+                Download file
+              </a>
+            ) : null}
+          </div>
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
             <h2 className="text-lg font-semibold text-white">Transcript timeline</h2>
             <div className="mt-4 space-y-3">
               {transcriptQuery.data.length ? (
                 transcriptQuery.data.map((segment) => (
                   <div key={segment.id} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-300">
-                    {segment.startSecond}s - {segment.endSecond}s · {segment.text}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gold">
+                        {formatSeconds(segment.startSecond)} - {formatSeconds(segment.endSecond)}
+                      </span>
+                      {supportsTimestampLinks && inlineSourceUrl ? (
+                        <a
+                          href={`${inlineSourceUrl}#t=${segment.startSecond}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-medium text-tide transition hover:text-white"
+                        >
+                          Open at timestamp
+                        </a>
+                      ) : null}
+                    </div>
+                    <p className="mt-3">{segment.text}</p>
                   </div>
                 ))
               ) : (
@@ -101,6 +168,14 @@ export default function MaterialDetailPage() {
                 </div>
               )}
             </div>
+          </div>
+          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
+            <h2 className="text-lg font-semibold text-white">Extracted source text</h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">
+              {sourcePreviewText
+                ? `${sourcePreviewText.slice(0, 1600)}${sourcePreviewText.length > 1600 ? "..." : ""}`
+                : "The source preview will appear here after extraction or transcription completes."}
+            </p>
           </div>
         </section>
         <aside className="grid gap-6">
@@ -115,9 +190,13 @@ export default function MaterialDetailPage() {
             </ul>
           </div>
           <div className="grid gap-3">
-            {citations.map((citation) => (
-              <SourceCitationCard key={citation.chunkId} citation={citation} />
-            ))}
+            {citations.length ? (
+              citations.map((citation) => <SourceCitationCard key={citation.chunkId} citation={citation} />)
+            ) : (
+              <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5 text-sm text-slate-400">
+                Source citations will appear here once chunked text is available.
+              </div>
+            )}
           </div>
         </aside>
       </div>
