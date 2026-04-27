@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from app.schemas.common import CamelModel, TimestampsMixin
+from app.schemas.common import TimestampsMixin
 
 
 class MaterialResponse(TimestampsMixin):
@@ -58,4 +58,3 @@ class TranscriptSegmentResponse(TimestampsMixin):
     language: str | None
     text: str
     translated_text: str | None
-

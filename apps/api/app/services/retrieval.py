@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from math import sqrt
 
-import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 from app.models.entities import ChatThread, Material, MaterialChunk

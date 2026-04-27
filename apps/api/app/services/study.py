@@ -20,7 +20,6 @@ from app.models.entities import (
     TopicMastery,
     User,
 )
-from app.models.enums import NoteType
 from app.schemas.study import (
     FlashcardGenerationRequest,
     FlashcardReviewRequest,

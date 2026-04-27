@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Generic, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
 from pydantic import BaseModel
 
@@ -40,4 +40,3 @@ class StorageBackend(Protocol):
     def delete(self, key: str) -> None: ...
 
     def presigned_url(self, key: str) -> str: ...
-

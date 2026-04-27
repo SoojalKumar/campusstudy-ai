@@ -119,7 +119,7 @@ def main() -> None:
             defaults={"description": f"Demo topic for {title}", "parent_topic_id": parent_topic_id},
         )
 
-    admin_user = get_or_create(
+    get_or_create(
         User,
         db,
         email="admin@pacific.edu",
@@ -408,4 +408,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
