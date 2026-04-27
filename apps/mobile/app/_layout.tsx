@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useState } from "react";
 
 import { SessionProvider } from "../lib/session";
+import { colors } from "../lib/theme";
 
 export default function RootLayout() {
   const [client] = useState(() => new QueryClient());
@@ -12,9 +13,10 @@ export default function RootLayout() {
       <QueryClientProvider client={client}>
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: "#0d1321" },
-            headerTintColor: "#f4f7fb",
-            contentStyle: { backgroundColor: "#081019" }
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: colors.inkSoft },
+            headerTintColor: colors.text,
+            contentStyle: { backgroundColor: colors.ink }
           }}
         />
       </QueryClientProvider>

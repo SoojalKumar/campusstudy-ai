@@ -1,14 +1,23 @@
 import { Tabs } from "expo-router";
 
+import { colors } from "../../lib/theme";
+
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: "#0d1321" },
-        headerTintColor: "#f4f7fb",
-        tabBarStyle: { backgroundColor: "#0d1321", borderTopColor: "#162238" },
-        tabBarActiveTintColor: "#73c9c7",
-        tabBarInactiveTintColor: "#7f8ea3"
+        headerShadowVisible: false,
+        headerStyle: { backgroundColor: colors.inkSoft },
+        headerTintColor: colors.text,
+        tabBarActiveTintColor: colors.tide,
+        tabBarInactiveTintColor: colors.dim,
+        tabBarStyle: {
+          backgroundColor: colors.inkSoft,
+          borderTopColor: colors.line,
+          minHeight: 72,
+          paddingBottom: 12,
+          paddingTop: 8
+        }
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Dashboard" }} />
@@ -17,4 +26,3 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
-
