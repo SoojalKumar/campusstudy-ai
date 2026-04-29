@@ -1,4 +1,4 @@
-import type { CourseSummary, DashboardSnapshot, ProcessingStage } from "@campusstudy/types";
+import type { CourseSummary, DashboardSnapshot, FlashcardDeckDTO, ProcessingStage } from "@campusstudy/types";
 
 export type MobileDashboardSnapshot = DashboardSnapshot & {
   latestNotes: Array<{ id: string; title: string; noteType: string; contentMarkdown?: string }>;
@@ -170,6 +170,51 @@ export const mobileNotesByCourse: Record<string, MobileNote[]> = {
       title: "Supervised Learning Revision Sheet",
       noteType: "revision_sheet",
       contentMarkdown: "Watch for overfitting when training score rises while validation score falls."
+    }
+  ]
+};
+
+export const mobileFlashcardDeck: FlashcardDeckDTO = {
+  id: "demo",
+  title: "Graph Traversal Review Sprint",
+  sourceScope: "course",
+  courseId: "c1",
+  topicId: "t1",
+  materialId: "m1",
+  metadataJson: { cardCount: 3, readiness: 0.68 },
+  flashcards: [
+    {
+      id: "f1",
+      deckId: "demo",
+      front: "When is BFS preferable to DFS?",
+      back: "When the shortest path in an unweighted graph matters.",
+      difficulty: "medium",
+      tags: ["graphs", "algorithms"],
+      explanation: "BFS explores by layers, so the first discovered route is shortest for unweighted graphs.",
+      orderIndex: 0,
+      dueAt: "2026-01-10T08:00:00.000Z"
+    },
+    {
+      id: "f2",
+      deckId: "demo",
+      front: "What does overfitting mean?",
+      back: "The model memorizes training patterns and performs poorly on new examples.",
+      difficulty: "easy",
+      tags: ["ml", "exam"],
+      explanation: "Validation performance is the clue: training improves while generalization falls.",
+      orderIndex: 1,
+      dueAt: "2026-01-11T08:00:00.000Z"
+    },
+    {
+      id: "f3",
+      deckId: "demo",
+      front: "What should you track while tracing DFS on an exam?",
+      back: "Track the call stack, visited set, and the exact neighbor order in the prompt.",
+      difficulty: "hard",
+      tags: ["graphs", "exam"],
+      explanation: "DFS answers often change if the neighbor order changes.",
+      orderIndex: 2,
+      dueAt: "2026-01-12T08:00:00.000Z"
     }
   ]
 };
