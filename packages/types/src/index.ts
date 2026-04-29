@@ -55,11 +55,33 @@ export interface ChatCitation {
 
 export interface FlashcardDTO {
   id: string;
+  deckId?: string;
   front: string;
   back: string;
   difficulty: "easy" | "medium" | "hard";
   tags: string[];
+  explanation?: string | null;
+  orderIndex?: number;
   dueAt?: string | null;
+}
+
+export interface FlashcardDeckDTO {
+  id: string;
+  title: string;
+  sourceScope: string;
+  courseId?: string | null;
+  topicId?: string | null;
+  materialId?: string | null;
+  metadataJson?: Record<string, unknown>;
+  flashcards: FlashcardDTO[];
+}
+
+export interface FlashcardReviewDTO {
+  reviewId: string;
+  flashcardId: string;
+  rating: number;
+  dueAt: string;
+  intervalDays: number;
 }
 
 export interface QuizQuestionDTO {
@@ -69,4 +91,3 @@ export interface QuizQuestionDTO {
   options?: string[];
   explanation: string;
 }
-

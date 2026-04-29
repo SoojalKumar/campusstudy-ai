@@ -10,6 +10,7 @@ from app.schemas.study import (
     FlashcardGenerationRequest,
     FlashcardResponse,
     FlashcardReviewRequest,
+    FlashcardReviewResponse,
 )
 from app.services.study import generate_flashcard_deck, review_flashcard
 
@@ -32,15 +33,15 @@ def get_deck(deck_id: str, db: Session = Depends(get_db), user=Depends(get_curre
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found.")
     cards = db.query(Flashcard).filter(Flashcard.deck_id == deck.id).order_by(Flashcard.order_index.asc()).all()
-    latest_reviews = {
-        review.flashcard_id: review
+    latest_reviews = {}
+    if cards:
         for review in (
             db.query(FlashcardReview)
             .filter(FlashcardReview.user_id == user.id, FlashcardReview.flashcard_id.in_([card.id for card in cards]))
             .order_by(FlashcardReview.reviewed_at.desc())
             .all()
-        )
-    }
+        ):
+            latest_reviews.setdefault(review.flashcard_id, review)
     return FlashcardDeckResponse(
         **FlashcardDeckResponse.model_validate(deck).model_dump(),
         flashcards=[
@@ -53,13 +54,18 @@ def get_deck(deck_id: str, db: Session = Depends(get_db), user=Depends(get_curre
     )
 
 
-@router.post("/decks/{deck_id}/review")
+@router.post("/decks/{deck_id}/review", response_model=FlashcardReviewResponse)
 def review_deck_card(
     deck_id: str,
     payload: FlashcardReviewRequest,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
-) -> dict:
+) -> FlashcardReviewResponse:
     review = review_flashcard(db, user=user, deck_id=deck_id, payload=payload)
-    return {"review_id": review.id, "due_at": review.due_at.isoformat()}
-
+    return FlashcardReviewResponse(
+        review_id=review.id,
+        flashcard_id=review.flashcard_id,
+        rating=review.rating,
+        due_at=review.due_at,
+        interval_days=review.interval_days,
+    )

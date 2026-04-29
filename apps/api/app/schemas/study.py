@@ -71,6 +71,14 @@ class FlashcardReviewRequest(CamelModel):
     rating: int = Field(ge=1, le=5)
 
 
+class FlashcardReviewResponse(CamelModel):
+    review_id: str
+    flashcard_id: str
+    rating: int
+    due_at: datetime
+    interval_days: int
+
+
 class QuizGenerationRequest(CamelModel):
     material_id: str | None = None
     topic_id: str | None = None

@@ -103,6 +103,26 @@ def generate_flashcard_deck(db: Session, *, user: User, payload: FlashcardGenera
     return deck
 
 
+def calculate_flashcard_schedule(
+    *, previous_interval_days: int | None, previous_ease_factor: float | None, rating: int
+) -> tuple[int, float]:
+    previous_interval = max(1, previous_interval_days or 1)
+    previous_ease = max(1.3, previous_ease_factor or 2.5)
+    ease_delta = {1: -0.35, 2: -0.2, 3: -0.05, 4: 0.08, 5: 0.16}[rating]
+    ease_factor = min(3.0, max(1.3, round(previous_ease + ease_delta, 2)))
+
+    if rating <= 2:
+        interval_days = 1
+    elif rating == 3:
+        interval_days = max(2, previous_interval + 1)
+    elif rating == 4:
+        interval_days = max(3, round(previous_interval * ease_factor))
+    else:
+        interval_days = max(4, round(previous_interval * (ease_factor + 0.8)))
+
+    return interval_days, ease_factor
+
+
 def review_flashcard(db: Session, *, user: User, deck_id: str, payload: FlashcardReviewRequest) -> FlashcardReview:
     card = (
         db.query(Flashcard)
@@ -118,15 +138,20 @@ def review_flashcard(db: Session, *, user: User, deck_id: str, payload: Flashcar
         .order_by(FlashcardReview.reviewed_at.desc())
         .first()
     )
-    interval = max(1, (previous.interval_days if previous else 1) + payload.rating - 2)
+    reviewed_at = datetime.now(UTC)
+    interval, ease_factor = calculate_flashcard_schedule(
+        previous_interval_days=previous.interval_days if previous else None,
+        previous_ease_factor=previous.ease_factor if previous else None,
+        rating=payload.rating,
+    )
     review = FlashcardReview(
         flashcard_id=card.id,
         user_id=user.id,
         rating=payload.rating,
-        reviewed_at=datetime.now(UTC),
-        due_at=datetime.now(UTC) + timedelta(days=interval),
+        reviewed_at=reviewed_at,
+        due_at=reviewed_at + timedelta(days=interval),
         interval_days=interval,
-        ease_factor=2.5 + (payload.rating - 3) * 0.1,
+        ease_factor=ease_factor,
     )
     db.add(review)
     db.commit()
