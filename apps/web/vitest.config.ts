@@ -8,9 +8,11 @@ export default defineConfig({
     }
   },
   test: {
+    cache: {
+      dir: process.env.VITEST_CACHE_DIR ?? "/tmp/campusstudy-web-vitest"
+    },
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"]
   }
 });
-

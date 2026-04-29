@@ -1,4 +1,4 @@
-import type { CourseSummary, DashboardSnapshot, FlashcardDTO, QuizQuestionDTO } from "@campusstudy/types";
+import type { CourseSummary, DashboardSnapshot, FlashcardDTO, FlashcardDeckDTO, QuizQuestionDTO } from "@campusstudy/types";
 
 export const demoDashboard: DashboardSnapshot = {
   streakDays: 5,
@@ -37,19 +37,49 @@ export const demoCourses: CourseSummary[] = [
 export const demoFlashcards: FlashcardDTO[] = [
   {
     id: "f1",
+    deckId: "demo",
     front: "When is BFS preferable to DFS?",
     back: "When the shortest path in an unweighted graph matters.",
     difficulty: "medium",
-    tags: ["graphs", "algorithms"]
+    tags: ["graphs", "algorithms"],
+    explanation: "BFS expands level by level, so the first time it reaches a node is the shortest unweighted path.",
+    orderIndex: 0,
+    dueAt: "2026-01-10T08:00:00.000Z"
   },
   {
     id: "f2",
+    deckId: "demo",
     front: "What does overfitting mean?",
     back: "A model memorises training data and performs poorly on unseen data.",
     difficulty: "easy",
-    tags: ["ml", "exam"]
+    tags: ["ml", "exam"],
+    explanation: "The warning sign is a high training score paired with weak validation performance.",
+    orderIndex: 1,
+    dueAt: "2026-01-11T08:00:00.000Z"
+  },
+  {
+    id: "f3",
+    deckId: "demo",
+    front: "What should you track while tracing DFS on an exam?",
+    back: "Track the call stack, visited set, and the exact neighbor order used by the prompt.",
+    difficulty: "hard",
+    tags: ["graphs", "exam"],
+    explanation: "Most mistakes come from changing neighbor order or forgetting when a node becomes visited.",
+    orderIndex: 2,
+    dueAt: "2026-01-12T08:00:00.000Z"
   }
 ];
+
+export const demoFlashcardDeck: FlashcardDeckDTO = {
+  id: "demo",
+  title: "Graph Traversal Review Sprint",
+  sourceScope: "course",
+  courseId: "c1",
+  topicId: "t1",
+  materialId: "m1",
+  metadataJson: { cardCount: demoFlashcards.length, readiness: 0.68 },
+  flashcards: demoFlashcards
+};
 
 export const demoQuiz: QuizQuestionDTO[] = [
   {
@@ -67,4 +97,3 @@ export const demoQuiz: QuizQuestionDTO[] = [
     explanation: "Retrieval practice usually improves long-term retention."
   }
 ];
-
