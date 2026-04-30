@@ -40,9 +40,11 @@ Base path: `/api/v1`
 - `GET /notes/by-material/{materialId}`
 - `GET /notes/by-course/{courseId}`
 - `POST /flashcards/generate`
+- `GET /flashcards/decks`
 - `GET /flashcards/decks/{id}`
 - `POST /flashcards/decks/{id}/review`
 - `POST /quizzes/generate`
+- `GET /quizzes/sets`
 - `GET /quizzes/sets/{id}`
 - `POST /quizzes/attempts`
 - `GET /quizzes/attempts/{id}`
@@ -51,6 +53,7 @@ Base path: `/api/v1`
 ## Chat / Transcript
 
 - `POST /chat/threads`
+- `GET /chat/threads`
 - `GET /chat/threads/{id}`
 - `POST /chat/threads/{id}/messages`
 - `GET /transcripts/materials/{id}/transcript`

@@ -12,6 +12,14 @@ The platform still needs to work without external model keys during setup, testi
 
 Students need trustworthy answers. Chunks store page numbers, slide numbers, and transcript timestamps so the app can always show where an answer came from.
 
+## Why strict chat refuses empty sources
+
+When strict-source mode is enabled, the assistant should not improvise if no chunks are retrieved. The API now returns a clear guardrail answer and zero citations so students understand they need to upload or select better source material.
+
+## Why the seeded pilot has one-click login
+
+The local MVP needs to prove real backend behavior quickly. One-click seeded student/admin login keeps the demo fast while still exercising hashed-password auth, JWT sessions, authorization, live decks, live quizzes, persisted chat threads, and admin metrics.
+
 ## Why both web and mobile now
 
 Students often upload on desktop but review on phone. The web app is the workspace; the mobile app is the repetition and quick-study companion.
@@ -25,4 +33,3 @@ Students often upload on desktop but review on phone. The web app is the workspa
 - OCR and YouTube import
 - notifications and analytics
 - multi-tenant campus controls
-

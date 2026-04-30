@@ -2,13 +2,14 @@
 
 This plan keeps the project moving in focused daily commits while protecting the product goal: CampusStudy AI should feel like a premium university study workspace on both web and mobile, not a generic chatbot.
 
-## Current State After Day 9
+## Current State After Live Pilot Push
 
 - Web app has landing, auth, dashboard, courses, material detail, source actions, chat, flashcards, quizzes, and admin flows with live API fallbacks.
 - Mobile app has Expo Router navigation, secure token storage, React Query, premium primitives, live dashboard/courses, flashcards, quizzes, and chat screens.
 - Flashcards now support API-backed review scheduling on web and mobile, including due-card state and tactile review loops.
 - Quizzes now support focused web/mobile players, scored attempts, answer feedback, topic performance, and backend scoring coverage.
-- Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, RAG foundations, quiz/flashcard tests, and CI validation gates.
+- Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, source-scoped RAG chat, quiz/flashcard tests, and CI validation gates.
+- The seeded web pilot can now run as a real API-backed session: one-click seeded login, live dashboard shortcuts, discoverable decks/quizzes, persisted RAG chat threads, and a `make pilot-smoke` API flow.
 
 ## Product Bar
 
@@ -64,10 +65,10 @@ The product should feel like a serious campus study command center:
 
 ### Day 10 - RAG Chat With Sources
 
-- Improve web and mobile chat source UX: citation tray, answer style selector, strict-source toggle, and follow-up context.
+- Improve web and mobile chat source UX: citation tray, answer style selector, strict-source toggle, and follow-up context. Web is partially complete after the live pilot push.
 - Add mobile chat composer with source scope chips.
-- Harden backend retrieval filters for material/topic/course/workspace scope.
-- Add tests for citations and strict-source behavior.
+- Harden backend retrieval filters for material/topic/course/workspace scope. Complete for backend workspace/material access.
+- Add tests for citations and strict-source behavior. Backend coverage started.
 
 ### Day 11 - Material Processing UX
 
@@ -135,4 +136,4 @@ The product should feel like a serious campus study command center:
 
 ## Near-Term Priority
 
-Day 10 should focus on RAG chat trust. The next best slice is: web/mobile citation tray, answer style controls, strict-source toggle, stronger retrieval filters, and tests around source-grounded answers.
+Next priority should focus on replacing remaining demo-only entry points on mobile and material detail. The next best slice is: mobile live RAG chat, material-level generate buttons, processing timeline polish, and Docker smoke verification from a clean checkout.

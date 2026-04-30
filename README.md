@@ -230,17 +230,27 @@ CI:
 
 ## Seeded demo flow
 
-1. Sign in as `maya@student.pacific.edu`.
-2. Open the dashboard and inspect recent uploads.
-3. Visit `CS220` and the seeded graph traversal material.
-4. Review generated notes, flashcards, and quiz content.
-5. Sign in as admin to inspect metrics and job visibility.
+1. Start the API, worker, and web app.
+2. Run `make seed`.
+3. Open `http://localhost:3000/login`.
+4. Click `Enter as Maya, CS student` for a real seeded student session.
+5. Open Dashboard, then use `Live Study Packs` to jump into the seeded flashcard deck and quiz set.
+6. Open Study Chat, click `Start live thread`, ask a question, and inspect citations from uploaded chunks.
+7. Click `Enter as Campus Admin` on the login page to inspect metrics, users, uploads, and processing jobs.
+
+You can smoke-test the same flow through the API:
+
+```bash
+make pilot-smoke
+```
+
+The smoke test logs in as the seeded student and admin, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, posts a question, and verifies citations exist.
 
 ## Known limitations
 
 - Real speech-to-text is abstracted but defaults to a working mock provider for local MVP reliability.
 - Meta Llama integration is implemented against a compatible chat-completions shape and may require endpoint-specific tuning in production.
-- Web and mobile UI are production-style shells with seeded/demo-first screens; they are structured to connect to live endpoints incrementally.
+- Some screens still keep demo fallbacks for resilience when the API is offline, but the main seeded web pilot flow now uses live API sessions, seeded IDs, persisted chat threads, flashcard decks, quiz sets, and admin metrics.
 - Offline mobile caching is designed for later extension rather than fully implemented in this pass.
 
 ## Future roadmap

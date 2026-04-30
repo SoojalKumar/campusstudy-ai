@@ -3,7 +3,7 @@ SHELL := /bin/zsh
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 API_DIR := $(ROOT_DIR)apps/api
 
-.PHONY: preflight setup api-install api-dev migrate seed test lint docker-up docker-down web-dev mobile-dev
+.PHONY: preflight setup api-install api-dev migrate seed pilot-smoke test lint docker-up docker-down web-dev mobile-dev
 
 preflight:
 	cd $(ROOT_DIR) && python3 scripts/preflight.py
@@ -26,6 +26,9 @@ migrate:
 
 seed:
 	cd $(API_DIR) && source .venv/bin/activate && python -m app.seed.run
+
+pilot-smoke:
+	cd $(ROOT_DIR) && python3 scripts/pilot_smoke.py
 
 test:
 	cd $(API_DIR) && source .venv/bin/activate && pytest
