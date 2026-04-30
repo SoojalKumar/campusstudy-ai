@@ -1,4 +1,10 @@
-import type { CourseSummary, DashboardSnapshot, FlashcardDeckDTO, ProcessingStage } from "@campusstudy/types";
+import type {
+  CourseSummary,
+  DashboardSnapshot,
+  FlashcardDeckDTO,
+  ProcessingStage,
+  QuizSetDTO
+} from "@campusstudy/types";
 
 export type MobileDashboardSnapshot = DashboardSnapshot & {
   latestNotes: Array<{ id: string; title: string; noteType: string; contentMarkdown?: string }>;
@@ -215,6 +221,52 @@ export const mobileFlashcardDeck: FlashcardDeckDTO = {
       explanation: "DFS answers often change if the neighbor order changes.",
       orderIndex: 2,
       dueAt: "2026-01-12T08:00:00.000Z"
+    }
+  ]
+};
+
+export const mobileQuizSet: QuizSetDTO = {
+  id: "demo",
+  title: "Graph Traversal Exam Sprint",
+  difficulty: "medium",
+  questionCount: 3,
+  courseId: "c1",
+  topicId: "t1",
+  materialId: "m1",
+  metadataJson: { estimatedMinutes: 4, source: "Week 4 Graphs Lecture" },
+  questions: [
+    {
+      id: "q1",
+      quizSetId: "demo",
+      prompt: "Which structure powers breadth-first search?",
+      type: "mcq",
+      questionType: "mcq",
+      options: ["Stack", "Queue", "Heap", "Set"],
+      explanation: "BFS expands level by level, which matches first-in-first-out queue behavior.",
+      orderIndex: 0,
+      correctAnswer: "Queue"
+    },
+    {
+      id: "q2",
+      quizSetId: "demo",
+      prompt: "True or false: DFS always finds shortest paths in unweighted graphs.",
+      type: "true_false",
+      questionType: "true_false",
+      options: ["True", "False"],
+      explanation: "DFS can travel deeply before checking nearby alternatives, so shortest paths are not guaranteed.",
+      orderIndex: 1,
+      correctAnswer: "False"
+    },
+    {
+      id: "q3",
+      quizSetId: "demo",
+      prompt: "A professor asks you to trace BFS. What state should you update first?",
+      type: "scenario",
+      questionType: "scenario",
+      options: ["The call stack", "The queue", "The heap invariant", "The regression line"],
+      explanation: "BFS tracing depends on queue order, visited state, and neighbor order.",
+      orderIndex: 2,
+      correctAnswer: "The queue"
     }
   ]
 };
