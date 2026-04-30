@@ -1,6 +1,7 @@
 import type {
   CourseSummary,
   DashboardSnapshot,
+  ChatThreadDTO,
   FlashcardDTO,
   FlashcardDeckDTO,
   QuizPerformanceOverviewDTO,
@@ -41,6 +42,46 @@ export const demoCourses: CourseSummary[] = [
     materialCount: 9
   }
 ];
+
+export const demoChatThread: ChatThreadDTO = {
+  id: "demo",
+  userId: "demo-user",
+  title: "Graph Traversal Source Chat",
+  scopeType: "workspace",
+  courseId: "c1",
+  topicId: "t1",
+  materialId: "m1",
+  strictMode: true,
+  answerStyle: "exam-oriented",
+  messages: [
+    {
+      id: "demo-user-message",
+      threadId: "demo",
+      role: "user",
+      content: "How would BFS and DFS show up in an exam question?",
+      citations: []
+    },
+    {
+      id: "demo-assistant-message",
+      threadId: "demo",
+      role: "assistant",
+      content:
+        "Expect prompts that ask for traversal order, memory trade-offs, and when shortest path guarantees matter. BFS is the safe answer for unweighted shortest paths because it expands level by level.",
+      citations: [
+        {
+          chunkId: "chunk-1",
+          sourceLabel: "Page 1",
+          snippet: "Exam questions often compare time complexity, memory trade-offs, and best-fit use cases."
+        },
+        {
+          chunkId: "chunk-2",
+          sourceLabel: "Page 1",
+          snippet: "Students should connect each algorithm to queue or stack behavior and trace small graphs."
+        }
+      ]
+    }
+  ]
+};
 
 export const demoFlashcards: FlashcardDTO[] = [
   {

@@ -53,6 +53,49 @@ export interface ChatCitation {
   snippet: string;
 }
 
+export type ChatScope = "material" | "topic" | "course" | "workspace";
+export type ChatAnswerStyle = "beginner" | "concise" | "detailed" | "exam-oriented" | "bullet-summary";
+
+export interface ChatMessageDTO {
+  id: string;
+  threadId: string;
+  role: "user" | "assistant" | string;
+  content: string;
+  metadataJson?: Record<string, unknown>;
+  citations: ChatCitation[];
+  createdAt?: string;
+}
+
+export interface ChatThreadDTO {
+  id: string;
+  userId: string;
+  title: string;
+  scopeType: ChatScope;
+  courseId?: string | null;
+  topicId?: string | null;
+  materialId?: string | null;
+  strictMode: boolean;
+  answerStyle: ChatAnswerStyle;
+  messages: ChatMessageDTO[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ChatThreadCreateDTO {
+  title: string;
+  scopeType: ChatScope;
+  courseId?: string | null;
+  topicId?: string | null;
+  materialId?: string | null;
+  strictMode: boolean;
+  answerStyle: ChatAnswerStyle;
+}
+
+export interface RAGAnswerDTO {
+  answer: string;
+  citations: ChatCitation[];
+}
+
 export interface FlashcardDTO {
   id: string;
   deckId?: string;

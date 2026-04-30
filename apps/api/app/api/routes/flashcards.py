@@ -27,6 +27,21 @@ def generate_deck(
     return get_deck(deck.id, db=db, user=user)
 
 
+@router.get("/decks", response_model=list[FlashcardDeckResponse])
+def list_decks(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> list[FlashcardDeckResponse]:
+    decks = (
+        db.query(FlashcardDeck)
+        .filter(FlashcardDeck.user_id == user.id, FlashcardDeck.deleted_at.is_(None))
+        .order_by(FlashcardDeck.updated_at.desc())
+        .limit(25)
+        .all()
+    )
+    return [FlashcardDeckResponse.model_validate(deck) for deck in decks]
+
+
 @router.get("/decks/{deck_id}", response_model=FlashcardDeckResponse)
 def get_deck(
     deck_id: str,

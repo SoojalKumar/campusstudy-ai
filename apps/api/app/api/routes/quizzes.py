@@ -27,6 +27,21 @@ def generate_quiz_endpoint(
     return get_quiz_set(quiz.id, db=db, user=user)
 
 
+@router.get("/sets", response_model=list[QuizSetResponse])
+def list_quiz_sets(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> list[QuizSetResponse]:
+    quiz_sets = (
+        db.query(QuizSet)
+        .filter(QuizSet.user_id == user.id, QuizSet.deleted_at.is_(None))
+        .order_by(QuizSet.updated_at.desc())
+        .limit(25)
+        .all()
+    )
+    return [QuizSetResponse.model_validate(quiz_set) for quiz_set in quiz_sets]
+
+
 @router.get("/sets/{quiz_id}", response_model=QuizSetResponse)
 def get_quiz_set(
     quiz_id: str,

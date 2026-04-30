@@ -50,13 +50,22 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           <div className="mt-auto rounded-3xl border border-white/10 bg-slate-950/60 p-4">
             <p className="text-sm font-medium text-white">{user?.name ?? "Demo student"}</p>
             <p className="mt-1 text-xs text-slate-400">{user?.email ?? "student.pacific.edu"}</p>
-            <button
-              className="mt-4 w-full rounded-2xl bg-ember px-4 py-3 text-sm font-semibold text-ink"
-              onClick={clearSession}
-              type="button"
-            >
-              Sign out
-            </button>
+            {user ? (
+              <button
+                className="mt-4 w-full rounded-2xl bg-ember px-4 py-3 text-sm font-semibold text-ink"
+                onClick={clearSession}
+                type="button"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                className="mt-4 block w-full rounded-2xl bg-white px-4 py-3 text-center text-sm font-semibold text-slate-950"
+                href="/login"
+              >
+                Sign in for live mode
+              </Link>
+            )}
           </div>
         </aside>
         <main className="flex-1">{children}</main>

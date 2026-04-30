@@ -1,10 +1,12 @@
 "use client";
 
+import type { FlashcardDeckDTO, QuizSetDTO } from "@campusstudy/types";
 import { MetricCard, SectionCard } from "@campusstudy/ui";
+import Link from "next/link";
 
 import { LayoutShell } from "@/components/layout-shell";
 import { MaterialUploadPanel } from "@/components/material-upload-panel";
-import { demoCourses, demoDashboard } from "@/lib/demo-data";
+import { demoCourses, demoDashboard, demoFlashcardDeck, demoQuizSet } from "@/lib/demo-data";
 import { useAuthedQuery } from "@/lib/api-hooks";
 
 type DashboardResponse = typeof demoDashboard & {
@@ -27,8 +29,20 @@ export default function DashboardPage() {
     path: "/courses",
     fallbackData: demoCourses
   });
+  const decksQuery = useAuthedQuery<FlashcardDeckDTO[]>({
+    queryKey: ["flashcard-decks"],
+    path: "/flashcards/decks",
+    fallbackData: [demoFlashcardDeck]
+  });
+  const quizzesQuery = useAuthedQuery<QuizSetDTO[]>({
+    queryKey: ["quiz-sets"],
+    path: "/quizzes/sets",
+    fallbackData: [demoQuizSet]
+  });
   const dashboard = dashboardQuery.data;
   const courses = coursesQuery.data;
+  const latestDeck = decksQuery.data[0];
+  const latestQuiz = quizzesQuery.data[0];
 
   return (
     <LayoutShell>
@@ -61,33 +75,72 @@ export default function DashboardPage() {
             <MaterialUploadPanel courses={courses} />
           </SectionCard>
 
-          <SectionCard title="Weak Topics" eyebrow="Revision Radar">
-            <div className="space-y-3">
-              {dashboard.weakTopics.map((item) => (
-                <div key={item.topic} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-white">{item.topic}</p>
-                    <span className="text-sm text-amber-200">{Math.round(item.mastery * 100)}%</span>
+          <div className="grid gap-6">
+            <SectionCard title="Live Study Packs" eyebrow="Seeded Workflow">
+              <div className="grid gap-3">
+                {latestDeck ? (
+                  <Link
+                    className="rounded-2xl border border-tide/20 bg-tide/10 p-4 transition hover:-translate-y-0.5"
+                    href={`/flashcards/${latestDeck.id}`}
+                  >
+                    <p className="text-sm font-semibold uppercase tracking-[0.22em] text-tide">Flashcards</p>
+                    <p className="mt-2 font-semibold text-white">{latestDeck.title}</p>
+                    <p className="mt-1 text-sm text-slate-300">
+                      {latestDeck.flashcards.length ? `${latestDeck.flashcards.length} cards ready` : "Review deck ready"}
+                    </p>
+                  </Link>
+                ) : null}
+                {latestQuiz ? (
+                  <Link
+                    className="rounded-2xl border border-gold/20 bg-gold/10 p-4 transition hover:-translate-y-0.5"
+                    href={`/quizzes/${latestQuiz.id}`}
+                  >
+                    <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold">Quiz</p>
+                    <p className="mt-2 font-semibold text-white">{latestQuiz.title}</p>
+                    <p className="mt-1 text-sm text-slate-300">{latestQuiz.questionCount} questions ready</p>
+                  </Link>
+                ) : null}
+                <Link
+                  className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm font-semibold text-white transition hover:border-tide/30"
+                  href="/chat/demo"
+                >
+                  Open source-grounded chat
+                </Link>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Weak Topics" eyebrow="Revision Radar">
+              <div className="space-y-3">
+                {dashboard.weakTopics.map((item) => (
+                  <div key={item.topic} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-white">{item.topic}</p>
+                      <span className="text-sm text-amber-200">{Math.round(item.mastery * 100)}%</span>
+                    </div>
+                    <div className="mt-3 h-2 rounded-full bg-white/5">
+                      <div className="h-full rounded-full bg-ember" style={{ width: `${item.mastery * 100}%` }} />
+                    </div>
                   </div>
-                  <div className="mt-3 h-2 rounded-full bg-white/5">
-                    <div className="h-full rounded-full bg-ember" style={{ width: `${item.mastery * 100}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
+                ))}
+              </div>
+            </SectionCard>
+          </div>
         </div>
 
         <SectionCard title="Recent Uploads" eyebrow="Processing">
           <div className="grid gap-3">
             {dashboard.recentUploads.map((upload) => (
-              <div key={upload.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+              <Link
+                key={upload.id}
+                className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/30"
+                href={`/materials/${upload.id}`}
+              >
                 <div>
                   <p className="font-medium text-white">{upload.title}</p>
                   <p className="text-sm text-slate-400">{upload.courseTitle}</p>
                 </div>
                 <span className="rounded-full bg-tide/15 px-3 py-1 text-sm text-tide">{upload.status}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </SectionCard>

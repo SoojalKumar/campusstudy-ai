@@ -73,6 +73,18 @@ def test_quiz_set_response_includes_questions_without_correct_answers(
     assert "correctAnswer" not in payload["questions"][0]
 
 
+def test_quiz_set_list_exposes_owned_quizzes(client, db_session, seeded_data):
+    _, quiz, _ = create_quiz_set(db_session, seeded_data)
+
+    response = client.get("/api/v1/quizzes/sets", headers=bearer_for(seeded_data["owner"]))
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["id"] == quiz.id
+    assert payload[0]["title"] == "Graph Traversal Quiz"
+    assert payload[0]["questions"] == []
+
+
 def test_quiz_attempt_scores_answers_and_returns_feedback(client, db_session, seeded_data):
     _, quiz, questions = create_quiz_set(db_session, seeded_data)
 

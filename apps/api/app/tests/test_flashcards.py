@@ -95,6 +95,18 @@ def test_review_endpoint_returns_camel_case_schedule(client, db_session, seeded_
     assert "due_at" not in payload
 
 
+def test_deck_list_exposes_owned_review_decks(client, db_session, seeded_data):
+    deck, _ = create_deck_with_card(db_session, seeded_data)
+
+    response = client.get("/api/v1/flashcards/decks", headers=bearer_for(seeded_data["owner"]))
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["id"] == deck.id
+    assert payload[0]["title"] == "Testing Fundamentals Sprint"
+    assert payload[0]["flashcards"] == []
+
+
 def test_deck_response_uses_latest_review_due_date(client, db_session, seeded_data):
     deck, card = create_deck_with_card(db_session, seeded_data)
     older_due = datetime(2026, 1, 3, tzinfo=UTC)
