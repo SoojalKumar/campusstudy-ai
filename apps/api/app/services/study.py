@@ -21,6 +21,7 @@ from app.models.entities import (
     TopicMastery,
     User,
 )
+from app.models.enums import UserRole
 from app.schemas.study import (
     FlashcardGenerationRequest,
     FlashcardReviewRequest,
@@ -32,27 +33,41 @@ from app.services.generation import generate_flashcards, generate_note_bundle, g
 from app.services.materials import ensure_course_access
 
 
-def _source_text(db: Session, *, material_id: str | None, course_id: str | None) -> tuple[str, Material | None]:
+def _can_read_material(user: User, material: Material) -> bool:
+    if user.role in {UserRole.ADMIN, UserRole.MODERATOR}:
+        return True
+    return material.owner_user_id == user.id
+
+
+def _source_text(
+    db: Session,
+    *,
+    user: User,
+    material_id: str | None,
+    course_id: str | None,
+) -> tuple[str, Material | None]:
     material = None
     if material_id:
         material = db.query(Material).filter(Material.id == material_id, Material.deleted_at.is_(None)).first()
-        if not material:
+        if not material or not _can_read_material(user, material):
             raise HTTPException(status_code=404, detail="Material not found.")
         text = material.transcript_text or material.extracted_text
         if not text:
             text = "\n".join(chunk.text for chunk in db.query(MaterialChunk).filter(MaterialChunk.material_id == material_id))
         return text or "", material
     if course_id:
-        materials = db.query(Material).filter(Material.course_id == course_id, Material.deleted_at.is_(None)).all()
+        ensure_course_access(db, user=user, course_id=course_id)
+        material_query = db.query(Material).filter(Material.course_id == course_id, Material.deleted_at.is_(None))
+        if user.role not in {UserRole.ADMIN, UserRole.MODERATOR}:
+            material_query = material_query.filter(Material.owner_user_id == user.id)
+        materials = material_query.all()
         text = "\n\n".join((item.transcript_text or item.extracted_text or "") for item in materials)
         return text, materials[0] if materials else None
     raise HTTPException(status_code=400, detail="A material_id or course_id is required.")
 
 
 def generate_notes(db: Session, *, user: User, payload: NoteGenerationRequest) -> NoteSet:
-    if payload.course_id:
-        ensure_course_access(db, user=user, course_id=payload.course_id)
-    text, material = _source_text(db, material_id=payload.material_id, course_id=payload.course_id)
+    text, material = _source_text(db, user=user, material_id=payload.material_id, course_id=payload.course_id)
     bundle = generate_note_bundle(text)
     note = NoteSet(
         user_id=user.id,
@@ -74,7 +89,7 @@ def generate_notes(db: Session, *, user: User, payload: NoteGenerationRequest) -
 
 
 def generate_flashcard_deck(db: Session, *, user: User, payload: FlashcardGenerationRequest) -> FlashcardDeck:
-    text, material = _source_text(db, material_id=payload.material_id, course_id=payload.course_id)
+    text, material = _source_text(db, user=user, material_id=payload.material_id, course_id=payload.course_id)
     result = generate_flashcards(text, payload.limit)
     deck = FlashcardDeck(
         user_id=user.id,
@@ -161,7 +176,7 @@ def review_flashcard(db: Session, *, user: User, deck_id: str, payload: Flashcar
 
 
 def generate_quiz_set(db: Session, *, user: User, payload: QuizGenerationRequest) -> QuizSet:
-    text, material = _source_text(db, material_id=payload.material_id, course_id=payload.course_id)
+    text, material = _source_text(db, user=user, material_id=payload.material_id, course_id=payload.course_id)
     result = generate_quiz(text, payload.count, payload.include_scenarios)
     quiz_set = QuizSet(
         user_id=user.id,

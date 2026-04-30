@@ -1,11 +1,17 @@
 "use client";
 
+import type { FlashcardDeckDTO, QuizSetDTO } from "@campusstudy/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 import { LayoutShell } from "@/components/layout-shell";
 import { SourceFileActions, SourceTimestampButton } from "@/components/source-file-actions";
 import { SourceCitationCard } from "@/components/source-citation-card";
+import { apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
+import { useSession } from "@/lib/session";
 
 type MaterialResponse = {
   id: string;
@@ -50,6 +56,10 @@ function formatSeconds(totalSeconds: number) {
 export default function MaterialDetailPage() {
   const params = useParams<{ materialId: string }>();
   const materialId = params.materialId;
+  const { token, hydrated } = useSession();
+  const queryClient = useQueryClient();
+  const [generatedDeckId, setGeneratedDeckId] = useState<string | null>(null);
+  const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
   const materialQuery = useAuthedQuery<MaterialResponse>({
     queryKey: ["material", materialId],
     path: `/materials/${materialId}`,
@@ -81,6 +91,40 @@ export default function MaterialDetailPage() {
     fallbackData: []
   });
   const material = materialQuery.data;
+  const canGenerate = hydrated && Boolean(token) && material.processingStatus === "completed";
+  const noteMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<NoteResponse>("/notes/generate", {
+        body: JSON.stringify({ materialId, noteType: "revision_sheet" }),
+        method: "POST",
+        token
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["notes", materialId] })
+  });
+  const deckMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<FlashcardDeckDTO>("/flashcards/generate", {
+        body: JSON.stringify({ limit: 8, materialId }),
+        method: "POST",
+        token
+      }),
+    onSuccess: (deck) => {
+      setGeneratedDeckId(deck.id);
+      void queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+    }
+  });
+  const quizMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<QuizSetDTO>("/quizzes/generate", {
+        body: JSON.stringify({ count: 5, difficulty: "medium", includeScenarios: true, materialId }),
+        method: "POST",
+        token
+      }),
+    onSuccess: (quiz) => {
+      setGeneratedQuizId(quiz.id);
+      void queryClient.invalidateQueries({ queryKey: ["quiz-sets"] });
+    }
+  });
   const citations = chunksQuery.data.slice(0, 4).map((chunk) => ({
     chunkId: chunk.id,
     sourceLabel:
@@ -151,6 +195,59 @@ export default function MaterialDetailPage() {
           </div>
         </section>
         <aside className="grid gap-6">
+          <div className="rounded-[2rem] border border-cyan-200/15 bg-[var(--panel)] p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-tide">Generate Study Pack</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">Turn this source into action</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Create fresh notes, due-card decks, and a scored quiz directly from this material.
+            </p>
+            <div className="mt-5 grid gap-3">
+              <button
+                className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!canGenerate || noteMutation.isPending}
+                onClick={() => noteMutation.mutate()}
+              >
+                {noteMutation.isPending ? "Generating revision sheet..." : "Generate revision notes"}
+              </button>
+              <button
+                className="rounded-2xl border border-white/10 bg-tide/90 px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!canGenerate || deckMutation.isPending}
+                onClick={() => deckMutation.mutate()}
+              >
+                {deckMutation.isPending ? "Building flashcards..." : "Generate flashcard deck"}
+              </button>
+              <button
+                className="rounded-2xl border border-white/10 bg-gold/90 px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!canGenerate || quizMutation.isPending}
+                onClick={() => quizMutation.mutate()}
+              >
+                {quizMutation.isPending ? "Writing quiz..." : "Generate quiz set"}
+              </button>
+            </div>
+            {!canGenerate ? (
+              <p className="mt-4 text-xs text-slate-500">
+                Sign in and wait for processing to complete before generating new study outputs.
+              </p>
+            ) : null}
+            {noteMutation.isSuccess ? <p className="mt-4 text-sm text-tide">Revision notes added below.</p> : null}
+            {generatedDeckId ? (
+              <Link className="mt-4 block text-sm font-semibold text-tide" href={`/flashcards/${generatedDeckId}`}>
+                Open generated flashcards
+              </Link>
+            ) : null}
+            {generatedQuizId ? (
+              <Link className="mt-2 block text-sm font-semibold text-gold" href={`/quizzes/${generatedQuizId}`}>
+                Open generated quiz
+              </Link>
+            ) : null}
+            {noteMutation.isError || deckMutation.isError || quizMutation.isError ? (
+              <p className="mt-4 text-sm text-ember">
+                {(noteMutation.error as Error | null)?.message ||
+                  (deckMutation.error as Error | null)?.message ||
+                  (quizMutation.error as Error | null)?.message}
+              </p>
+            ) : null}
+          </div>
           <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
             <h2 className="text-xl font-semibold text-white">Note outputs</h2>
             <ul className="mt-4 space-y-2 text-sm text-slate-300">

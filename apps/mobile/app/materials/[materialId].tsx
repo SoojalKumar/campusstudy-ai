@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import type { FlashcardDeckDTO, QuizSetDTO } from "@campusstudy/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { router, useLocalSearchParams } from "expo-router";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ActionRow, Card, EmptyState, Pill, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
@@ -49,6 +50,7 @@ export default function MaterialDetailScreen() {
   const { materialId } = useLocalSearchParams<{ materialId: string }>();
   const resolvedMaterialId = materialId ?? "m1";
   const { token, hydrated } = useSession();
+  const queryClient = useQueryClient();
   const materialQuery = useQuery<MobileMaterial>({
     queryKey: ["mobile-material", resolvedMaterialId],
     queryFn: () => apiFetch<MobileMaterial>(`/materials/${resolvedMaterialId}`, { token }),
@@ -69,6 +71,40 @@ export default function MaterialDetailScreen() {
   const transcript = transcriptQuery.data ?? [];
   const sourcePreview = material.transcriptText ?? material.extractedText;
   const isLoading = materialQuery.isFetching || notesQuery.isFetching || transcriptQuery.isFetching;
+  const canGenerate = hydrated && Boolean(token) && material.processingStatus === "completed";
+  const noteMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<MobileNote>("/notes/generate", {
+        body: JSON.stringify({ materialId: resolvedMaterialId, noteType: "revision_sheet" }),
+        method: "POST",
+        token
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["mobile-material-notes", resolvedMaterialId] })
+  });
+  const deckMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<FlashcardDeckDTO>("/flashcards/generate", {
+        body: JSON.stringify({ limit: 8, materialId: resolvedMaterialId }),
+        method: "POST",
+        token
+      }),
+    onSuccess: (deck) => {
+      void queryClient.invalidateQueries({ queryKey: ["mobile-flashcard-decks"] });
+      router.push(`/flashcards/${deck.id}` as any);
+    }
+  });
+  const quizMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<QuizSetDTO>("/quizzes/generate", {
+        body: JSON.stringify({ count: 5, difficulty: "medium", includeScenarios: true, materialId: resolvedMaterialId }),
+        method: "POST",
+        token
+      }),
+    onSuccess: (quiz) => {
+      void queryClient.invalidateQueries({ queryKey: ["mobile-quiz-sets"] });
+      router.push(`/quizzes/${quiz.id}` as any);
+    }
+  });
 
   return (
     <Screen>
@@ -83,6 +119,46 @@ export default function MaterialDetailScreen() {
         </Text>
         <Pill label={material.processingStatus} tone={material.processingStatus === "completed" ? "tide" : "ember"} />
       </Card>
+
+      <View style={styles.section}>
+        <SectionHeader eyebrow="Generate" title="Build a study pack" />
+        <Card tone="strong" style={styles.generateCard}>
+          <Text style={styles.generateCopy}>
+            Create fresh revision notes, a flashcard sprint, or a scored quiz from this source.
+          </Text>
+          <View style={styles.generateGrid}>
+            <GenerateButton
+              disabled={!canGenerate || noteMutation.isPending}
+              label={noteMutation.isPending ? "Writing notes..." : "Revision notes"}
+              onPress={() => noteMutation.mutate()}
+              tone="light"
+            />
+            <GenerateButton
+              disabled={!canGenerate || deckMutation.isPending}
+              label={deckMutation.isPending ? "Building cards..." : "Flashcards"}
+              onPress={() => deckMutation.mutate()}
+              tone="tide"
+            />
+            <GenerateButton
+              disabled={!canGenerate || quizMutation.isPending}
+              label={quizMutation.isPending ? "Writing quiz..." : "Quiz set"}
+              onPress={() => quizMutation.mutate()}
+              tone="gold"
+            />
+          </View>
+          {!canGenerate ? (
+            <Text style={styles.generateHint}>Sign in and wait for processing to complete before generating new outputs.</Text>
+          ) : null}
+          {noteMutation.isSuccess ? <Text style={styles.successText}>Revision sheet added to this material.</Text> : null}
+          {noteMutation.isError || deckMutation.isError || quizMutation.isError ? (
+            <Text style={styles.errorText}>
+              {(noteMutation.error as Error | null)?.message ||
+                (deckMutation.error as Error | null)?.message ||
+                (quizMutation.error as Error | null)?.message}
+            </Text>
+          ) : null}
+        </Card>
+      </View>
 
       <View style={styles.section}>
         <SectionHeader eyebrow="Study Assets" title="Generated from this source" />
@@ -133,6 +209,35 @@ export default function MaterialDetailScreen() {
   );
 }
 
+function GenerateButton({
+  disabled,
+  label,
+  onPress,
+  tone
+}: {
+  disabled: boolean;
+  label: string;
+  onPress: () => void;
+  tone: "light" | "tide" | "gold";
+}) {
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.generateButton,
+        tone === "light" && styles.lightButton,
+        tone === "tide" && styles.tideButton,
+        tone === "gold" && styles.goldButton,
+        disabled && styles.disabled,
+        pressed && styles.pressed
+      ]}
+    >
+      <Text style={styles.generateButtonText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   hero: {
     gap: spacing.md
@@ -147,6 +252,58 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.md
+  },
+  generateCard: {
+    gap: spacing.md
+  },
+  generateCopy: {
+    color: colors.muted,
+    fontSize: 14,
+    lineHeight: 20
+  },
+  generateGrid: {
+    gap: spacing.sm
+  },
+  generateButton: {
+    borderRadius: 18,
+    padding: spacing.md
+  },
+  lightButton: {
+    backgroundColor: colors.text
+  },
+  tideButton: {
+    backgroundColor: colors.tide
+  },
+  goldButton: {
+    backgroundColor: colors.gold
+  },
+  generateButtonText: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: "900",
+    textAlign: "center"
+  },
+  generateHint: {
+    color: colors.dim,
+    fontSize: 12,
+    lineHeight: 18
+  },
+  successText: {
+    color: colors.tide,
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  errorText: {
+    color: colors.ember,
+    fontSize: 13,
+    lineHeight: 18
+  },
+  disabled: {
+    opacity: 0.5
+  },
+  pressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }]
   },
   stack: {
     gap: spacing.md
@@ -166,4 +323,3 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   }
 });
-
