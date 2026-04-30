@@ -43,7 +43,7 @@ def get_deck(deck_id: str, db: Session = Depends(get_db), user=Depends(get_curre
         ):
             latest_reviews.setdefault(review.flashcard_id, review)
     return FlashcardDeckResponse(
-        **FlashcardDeckResponse.model_validate(deck).model_dump(),
+        **FlashcardDeckResponse.model_validate(deck).model_dump(exclude={"flashcards"}),
         flashcards=[
             FlashcardResponse(
                 **FlashcardResponse.model_validate(card).model_dump(),

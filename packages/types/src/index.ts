@@ -86,8 +86,51 @@ export interface FlashcardReviewDTO {
 
 export interface QuizQuestionDTO {
   id: string;
+  quizSetId?: string;
   prompt: string;
   type: "mcq" | "true_false" | "short_answer" | "scenario";
+  questionType?: "mcq" | "true_false" | "short_answer" | "scenario";
   options?: string[];
   explanation: string;
+  orderIndex?: number;
+  correctAnswer?: string;
+}
+
+export interface QuizSetDTO {
+  id: string;
+  title: string;
+  difficulty: "easy" | "medium" | "hard";
+  questionCount: number;
+  courseId?: string | null;
+  topicId?: string | null;
+  materialId?: string | null;
+  metadataJson?: Record<string, unknown>;
+  questions: QuizQuestionDTO[];
+}
+
+export interface QuizAttemptAnswerDTO {
+  id: string;
+  quizQuestionId: string;
+  submittedAnswer: string;
+  isCorrect: boolean;
+  scoreAwarded: number;
+  feedback?: string | null;
+  correctAnswer?: string | null;
+}
+
+export interface QuizAttemptDTO {
+  id: string;
+  quizSetId: string;
+  userId?: string;
+  score: number;
+  totalQuestions: number;
+  correctCount: number;
+  completedAt?: string;
+  durationSeconds?: number | null;
+  answers: QuizAttemptAnswerDTO[];
+}
+
+export interface QuizPerformanceOverviewDTO {
+  averageScore: number;
+  weakTopics: Array<{ topicId: string; topic?: string; masteryScore: number; reason?: string | null }>;
 }

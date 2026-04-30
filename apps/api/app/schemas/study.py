@@ -145,6 +145,7 @@ class QuizAttemptAnswerResponse(TimestampsMixin):
     is_correct: bool
     score_awarded: float
     feedback: str | None
+    correct_answer: str | None = None
 
 
 class QuizAttemptResponse(TimestampsMixin):
@@ -156,6 +157,18 @@ class QuizAttemptResponse(TimestampsMixin):
     completed_at: datetime
     duration_seconds: int | None
     answers: list[QuizAttemptAnswerResponse] = Field(default_factory=list)
+
+
+class QuizPerformanceTopic(CamelModel):
+    topic_id: str
+    topic: str | None = None
+    mastery_score: float
+    reason: str | None = None
+
+
+class QuizPerformanceOverview(CamelModel):
+    average_score: float
+    weak_topics: list[QuizPerformanceTopic] = Field(default_factory=list)
 
 
 class CitationResponse(CamelModel):

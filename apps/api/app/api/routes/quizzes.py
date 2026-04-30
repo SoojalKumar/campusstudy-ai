@@ -4,9 +4,11 @@ from sqlalchemy.orm import Session
 from app.core.deps import enforce_rate_limit, get_current_user, get_db
 from app.models.entities import QuizAttempt, QuizAttemptAnswer, QuizQuestion, QuizSet
 from app.schemas.study import (
+    QuizAttemptAnswerResponse,
     QuizAttemptRequest,
     QuizAttemptResponse,
     QuizGenerationRequest,
+    QuizPerformanceOverview,
     QuizQuestionResponse,
     QuizSetResponse,
 )
@@ -26,13 +28,22 @@ def generate_quiz_endpoint(
 
 
 @router.get("/sets/{quiz_id}", response_model=QuizSetResponse)
-def get_quiz_set(quiz_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)) -> QuizSetResponse:
+def get_quiz_set(
+    quiz_id: str,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> QuizSetResponse:
     quiz = db.query(QuizSet).filter(QuizSet.id == quiz_id, QuizSet.user_id == user.id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz set not found.")
-    questions = db.query(QuizQuestion).filter(QuizQuestion.quiz_set_id == quiz.id).order_by(QuizQuestion.order_index.asc()).all()
+    questions = (
+        db.query(QuizQuestion)
+        .filter(QuizQuestion.quiz_set_id == quiz.id)
+        .order_by(QuizQuestion.order_index.asc())
+        .all()
+    )
     return QuizSetResponse(
-        **QuizSetResponse.model_validate(quiz).model_dump(),
+        **QuizSetResponse.model_validate(quiz).model_dump(exclude={"questions"}),
         questions=[QuizQuestionResponse.model_validate(question) for question in questions],
     )
 
@@ -48,18 +59,32 @@ def submit_attempt(
 
 
 @router.get("/attempts/{attempt_id}", response_model=QuizAttemptResponse)
-def get_attempt(attempt_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)) -> QuizAttemptResponse:
+def get_attempt(
+    attempt_id: str,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> QuizAttemptResponse:
     attempt = db.query(QuizAttempt).filter(QuizAttempt.id == attempt_id, QuizAttempt.user_id == user.id).first()
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found.")
-    answers = db.query(QuizAttemptAnswer).filter(QuizAttemptAnswer.quiz_attempt_id == attempt.id).all()
+    answers = (
+        db.query(QuizAttemptAnswer, QuizQuestion.correct_answer)
+        .join(QuizQuestion, QuizQuestion.id == QuizAttemptAnswer.quiz_question_id)
+        .filter(QuizAttemptAnswer.quiz_attempt_id == attempt.id)
+        .all()
+    )
     return QuizAttemptResponse(
-        **QuizAttemptResponse.model_validate(attempt).model_dump(),
-        answers=answers,
+        **QuizAttemptResponse.model_validate(attempt).model_dump(exclude={"answers"}),
+        answers=[
+            QuizAttemptAnswerResponse(
+                **QuizAttemptAnswerResponse.model_validate(answer).model_dump(exclude={"correct_answer"}),
+                correct_answer=correct_answer,
+            )
+            for answer, correct_answer in answers
+        ],
     )
 
 
-@router.get("/performance/overview")
-def performance(db: Session = Depends(get_db), user=Depends(get_current_user)) -> dict:
+@router.get("/performance/overview", response_model=QuizPerformanceOverview)
+def performance(db: Session = Depends(get_db), user=Depends(get_current_user)) -> QuizPerformanceOverview:
     return performance_overview(db, user=user)
-

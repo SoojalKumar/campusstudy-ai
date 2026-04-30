@@ -123,7 +123,10 @@ def test_deck_response_uses_latest_review_due_date(client, db_session, seeded_da
     )
     db_session.commit()
 
-    response = client.get(f"/api/v1/flashcards/decks/{deck.id}", headers=bearer_for(seeded_data["owner"]))
+    response = client.get(
+        f"/api/v1/flashcards/decks/{deck.id}",
+        headers=bearer_for(seeded_data["owner"]),
+    )
 
     assert response.status_code == 200
     assert response.json()["flashcards"][0]["dueAt"].startswith("2026-02-14")

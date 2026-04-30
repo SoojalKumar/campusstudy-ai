@@ -7,6 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.entities import (
+    CourseTopic,
     Flashcard,
     FlashcardDeck,
     FlashcardReview,
@@ -193,10 +194,11 @@ def generate_quiz_set(db: Session, *, user: User, payload: QuizGenerationRequest
 
 def submit_quiz_attempt(db: Session, *, user: User, payload: QuizAttemptRequest) -> QuizAttempt:
     quiz_set = db.query(QuizSet).filter(QuizSet.id == payload.quiz_set_id).first()
-    if not quiz_set:
+    if not quiz_set or quiz_set.user_id != user.id:
         raise HTTPException(status_code=404, detail="Quiz set not found.")
     questions = {
-        question.id: question for question in db.query(QuizQuestion).filter(QuizQuestion.quiz_set_id == quiz_set.id).all()
+        question.id: question
+        for question in db.query(QuizQuestion).filter(QuizQuestion.quiz_set_id == quiz_set.id).all()
     }
     correct = 0
     attempt = QuizAttempt(
@@ -211,7 +213,9 @@ def submit_quiz_attempt(db: Session, *, user: User, payload: QuizAttemptRequest)
         question = questions.get(answer.question_id)
         if not question:
             continue
-        is_correct = answer.submitted_answer.strip().lower() == question.correct_answer.strip().lower()
+        is_correct = (
+            answer.submitted_answer.strip().lower() == question.correct_answer.strip().lower()
+        )
         if is_correct:
             correct += 1
         db.add(
@@ -259,7 +263,13 @@ def performance_overview(db: Session, *, user: User) -> dict:
         or 0.0
     )
     weak_topics = (
-        db.query(TopicMastery.topic_id, TopicMastery.mastery_score, TopicMastery.weak_reason)
+        db.query(
+            TopicMastery.topic_id,
+            CourseTopic.title,
+            TopicMastery.mastery_score,
+            TopicMastery.weak_reason,
+        )
+        .join(CourseTopic, CourseTopic.id == TopicMastery.topic_id)
         .filter(TopicMastery.user_id == user.id, TopicMastery.deleted_at.is_(None))
         .order_by(TopicMastery.mastery_score.asc())
         .limit(5)
@@ -268,7 +278,7 @@ def performance_overview(db: Session, *, user: User) -> dict:
     return {
         "average_score": round(float(average), 2),
         "weak_topics": [
-            {"topic_id": topic_id, "mastery_score": mastery_score, "reason": reason}
-            for topic_id, mastery_score, reason in weak_topics
+            {"topic_id": topic_id, "topic": topic, "mastery_score": mastery_score, "reason": reason}
+            for topic_id, topic, mastery_score, reason in weak_topics
         ],
     }
