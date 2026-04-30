@@ -1,4 +1,12 @@
-import type { CourseSummary, DashboardSnapshot, FlashcardDTO, FlashcardDeckDTO, QuizQuestionDTO } from "@campusstudy/types";
+import type {
+  CourseSummary,
+  DashboardSnapshot,
+  FlashcardDTO,
+  FlashcardDeckDTO,
+  QuizPerformanceOverviewDTO,
+  QuizQuestionDTO,
+  QuizSetDTO
+} from "@campusstudy/types";
 
 export const demoDashboard: DashboardSnapshot = {
   streakDays: 5,
@@ -84,16 +92,71 @@ export const demoFlashcardDeck: FlashcardDeckDTO = {
 export const demoQuiz: QuizQuestionDTO[] = [
   {
     id: "q1",
+    quizSetId: "demo",
     prompt: "Which structure powers BFS?",
     type: "mcq",
+    questionType: "mcq",
     options: ["Stack", "Queue", "Heap", "Set"],
-    explanation: "BFS expands level by level, which matches queue behavior."
+    explanation: "BFS expands level by level, which matches queue behavior.",
+    correctAnswer: "Queue",
+    orderIndex: 0
   },
   {
     id: "q2",
+    quizSetId: "demo",
     prompt: "True or false: recall practice is stronger than passive rereading.",
     type: "true_false",
+    questionType: "true_false",
     options: ["True", "False"],
-    explanation: "Retrieval practice usually improves long-term retention."
+    explanation: "Retrieval practice usually improves long-term retention.",
+    correctAnswer: "True",
+    orderIndex: 1
+  },
+  {
+    id: "q3",
+    quizSetId: "demo",
+    prompt: "A lecture asks for the shortest path in an unweighted graph. Which traversal should you reach for first?",
+    type: "scenario",
+    questionType: "scenario",
+    options: ["DFS with recursion", "BFS with a queue", "Heap sort", "Binary search"],
+    explanation: "BFS discovers nodes by distance layer, so it is the default for shortest unweighted paths.",
+    correctAnswer: "BFS with a queue",
+    orderIndex: 2
   }
 ];
+
+export const demoQuizSet: QuizSetDTO = {
+  id: "demo",
+  title: "Graph Traversal Exam Sprint",
+  difficulty: "medium",
+  questionCount: demoQuiz.length,
+  courseId: "c1",
+  topicId: "t1",
+  materialId: "m1",
+  metadataJson: { mode: "exam", estimatedMinutes: 6 },
+  questions: demoQuiz
+};
+
+export const demoQuizPerformance: QuizPerformanceOverviewDTO = {
+  averageScore: 0.78,
+  weakTopics: [
+    {
+      topicId: "t1",
+      topic: "Graph traversal",
+      masteryScore: 0.64,
+      reason: "Missed queue-vs-stack questions in recent attempts."
+    },
+    {
+      topicId: "t2",
+      topic: "Model evaluation",
+      masteryScore: 0.73,
+      reason: "Needs more practice explaining validation metrics."
+    },
+    {
+      topicId: "t3",
+      topic: "Study strategy",
+      masteryScore: 0.82,
+      reason: "Mostly stable, but explanations can be sharper."
+    }
+  ]
+};

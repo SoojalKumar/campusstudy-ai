@@ -2,13 +2,13 @@
 
 This plan keeps the project moving in focused daily commits while protecting the product goal: CampusStudy AI should feel like a premium university study workspace on both web and mobile, not a generic chatbot.
 
-## Current State After Day 5
+## Current State After Day 9
 
-- Web app exists and is the strongest client today. It has landing, auth, dashboard, courses, material detail, source actions, chat, flashcards, quizzes, and admin shells.
-- Mobile app exists as an Expo Router app with secure token storage, React Query, login, tabs, courses, flashcards, quizzes, and chat screens.
-- Mobile is still mostly a product shell with demo data. It needs live API wiring, better design primitives, native interactions, and real study flows.
-- Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, RAG foundations, tests, and green CI.
-- Day 5 fixed protected source downloads and restored a high-signal backend lint gate.
+- Web app has landing, auth, dashboard, courses, material detail, source actions, chat, flashcards, quizzes, and admin flows with live API fallbacks.
+- Mobile app has Expo Router navigation, secure token storage, React Query, premium primitives, live dashboard/courses, flashcards, quizzes, and chat screens.
+- Flashcards now support API-backed review scheduling on web and mobile, including due-card state and tactile review loops.
+- Quizzes now support focused web/mobile players, scored attempts, answer feedback, topic performance, and backend scoring coverage.
+- Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, RAG foundations, quiz/flashcard tests, and CI validation gates.
 
 ## Product Bar
 
@@ -135,5 +135,4 @@ The product should feel like a serious campus study command center:
 
 ## Near-Term Priority
 
-Day 6 should focus on mobile. The app exists, but it needs to stop feeling like a demo shell. The next best slice is: mobile design system, live dashboard data, premium dashboard UI, and mobile validation setup.
-
+Day 10 should focus on RAG chat trust. The next best slice is: web/mobile citation tray, answer style controls, strict-source toggle, stronger retrieval filters, and tests around source-grounded answers.
