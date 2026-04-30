@@ -39,7 +39,13 @@ def list_decks(
         .limit(25)
         .all()
     )
-    return [FlashcardDeckResponse.model_validate(deck) for deck in decks]
+    return [
+        FlashcardDeckResponse(
+            **FlashcardDeckResponse.model_validate(deck).model_dump(exclude={"flashcards"}),
+            flashcards=[],
+        )
+        for deck in decks
+    ]
 
 
 @router.get("/decks/{deck_id}", response_model=FlashcardDeckResponse)
