@@ -20,6 +20,10 @@ When strict-source mode is enabled, the assistant should not improvise if no chu
 
 The local MVP needs to prove real backend behavior quickly. One-click seeded student/admin login keeps the demo fast while still exercising hashed-password auth, JWT sessions, authorization, live decks, live quizzes, persisted chat threads, and admin metrics.
 
+## Why material generation is owner-scoped
+
+Uploaded student materials are private study assets by default. Generation endpoints now enforce the same ownership boundary as retrieval, so one student cannot create notes, decks, or quizzes from another student's upload.
+
 ## Why both web and mobile now
 
 Students often upload on desktop but review on phone. The web app is the workspace; the mobile app is the repetition and quick-study companion.

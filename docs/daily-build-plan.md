@@ -5,11 +5,12 @@ This plan keeps the project moving in focused daily commits while protecting the
 ## Current State After Live Pilot Push
 
 - Web app has landing, auth, dashboard, courses, material detail, source actions, chat, flashcards, quizzes, and admin flows with live API fallbacks.
-- Mobile app has Expo Router navigation, secure token storage, React Query, premium primitives, live dashboard/courses, flashcards, quizzes, and chat screens.
+- Web material detail can now generate revision notes, flashcard decks, and quiz sets directly from a processed source.
+- Mobile app has Expo Router navigation, secure token storage, React Query, premium primitives, live dashboard/courses, flashcards, quizzes, material generation, and source-grounded chat screens.
 - Flashcards now support API-backed review scheduling on web and mobile, including due-card state and tactile review loops.
 - Quizzes now support focused web/mobile players, scored attempts, answer feedback, topic performance, and backend scoring coverage.
-- Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, source-scoped RAG chat, quiz/flashcard tests, and CI validation gates.
-- The seeded web pilot can now run as a real API-backed session: one-click seeded login, live dashboard shortcuts, discoverable decks/quizzes, persisted RAG chat threads, and a `make pilot-smoke` API flow.
+- Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, source-scoped RAG chat, generation authorization checks, quiz/flashcard tests, and CI validation gates.
+- The seeded web/mobile pilot can now run as a real API-backed session: one-click seeded login, live dashboard shortcuts, discoverable decks/quizzes, persisted RAG chat threads, material-level generation, and a `make pilot-smoke` API flow.
 
 ## Product Bar
 
@@ -65,13 +66,14 @@ The product should feel like a serious campus study command center:
 
 ### Day 10 - RAG Chat With Sources
 
-- Improve web and mobile chat source UX: citation tray, answer style selector, strict-source toggle, and follow-up context. Web is partially complete after the live pilot push.
-- Add mobile chat composer with source scope chips.
+- Improve web and mobile chat source UX: citation tray, answer style selector, strict-source toggle, and follow-up context. Web and mobile live-pilot flows are now in place.
+- Add mobile chat composer with source scope chips. Complete for workspace strict-source threads; material/topic chips remain a future polish slice.
 - Harden backend retrieval filters for material/topic/course/workspace scope. Complete for backend workspace/material access.
 - Add tests for citations and strict-source behavior. Backend coverage started.
 
 ### Day 11 - Material Processing UX
 
+- Add material-level generate buttons for revision notes, flashcards, and quizzes. Complete for web and mobile.
 - Add web processing timeline: uploaded, extracting, transcribing, chunking, embedding, generating notes, generating quiz, completed.
 - Add mobile material status cards.
 - Add retry failed job actions where authorized.
@@ -136,4 +138,4 @@ The product should feel like a serious campus study command center:
 
 ## Near-Term Priority
 
-Next priority should focus on replacing remaining demo-only entry points on mobile and material detail. The next best slice is: mobile live RAG chat, material-level generate buttons, processing timeline polish, and Docker smoke verification from a clean checkout.
+Next priority should focus on operational confidence and processing visibility. The next best slice is: processing timeline polish, admin retry UX, Docker smoke verification from a clean checkout, and richer seed data for a complete upload-to-study-pack demo.

@@ -236,7 +236,9 @@ CI:
 4. Click `Enter as Maya, CS student` for a real seeded student session.
 5. Open Dashboard, then use `Live Study Packs` to jump into the seeded flashcard deck and quiz set.
 6. Open Study Chat, click `Start live thread`, ask a question, and inspect citations from uploaded chunks.
-7. Click `Enter as Campus Admin` on the login page to inspect metrics, users, uploads, and processing jobs.
+7. Open a material detail page and use `Generate revision notes`, `Generate flashcard deck`, or `Generate quiz set`.
+8. Run the Expo mobile app, use the seeded login shortcuts, then open the Study tab for live deck/quiz/chat shortcuts.
+9. Click `Enter as Campus Admin` on the login page to inspect metrics, users, uploads, and processing jobs.
 
 You can smoke-test the same flow through the API:
 
@@ -250,7 +252,7 @@ The smoke test logs in as the seeded student and admin, checks dashboard/materia
 
 - Real speech-to-text is abstracted but defaults to a working mock provider for local MVP reliability.
 - Meta Llama integration is implemented against a compatible chat-completions shape and may require endpoint-specific tuning in production.
-- Some screens still keep demo fallbacks for resilience when the API is offline, but the main seeded web pilot flow now uses live API sessions, seeded IDs, persisted chat threads, flashcard decks, quiz sets, and admin metrics.
+- Some screens still keep demo fallbacks for resilience when the API is offline, but the main seeded web/mobile pilot flow now uses live API sessions, seeded IDs, persisted chat threads, flashcard decks, quiz sets, material generation, and admin metrics.
 - Offline mobile caching is designed for later extension rather than fully implemented in this pass.
 
 ## Future roadmap
