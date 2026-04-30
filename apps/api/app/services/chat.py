@@ -3,13 +3,46 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.models.entities import ChatCitation, ChatMessage, ChatThread, User
+from app.models.entities import ChatCitation, ChatMessage, ChatThread, CourseTopic, Material, User
+from app.models.enums import ChatScope
 from app.schemas.study import ChatMessageCreate, ChatThreadCreate, RAGAnswerResponse
 from app.services.generation import answer_question, build_citation_snippets
+from app.services.materials import ensure_course_access
 from app.services.retrieval import retrieve_relevant_chunks
 
 
+def _validate_thread_scope(db: Session, *, user: User, payload: ChatThreadCreate) -> None:
+    if payload.scope_type == ChatScope.MATERIAL:
+        if not payload.material_id:
+            raise HTTPException(status_code=400, detail="Material chat requires material_id.")
+        material = (
+            db.query(Material)
+            .filter(Material.id == payload.material_id, Material.deleted_at.is_(None))
+            .first()
+        )
+        if not material or (material.owner_user_id != user.id and user.role.value not in {"admin", "moderator"}):
+            raise HTTPException(status_code=404, detail="Material not found.")
+        return
+    if payload.scope_type == ChatScope.TOPIC:
+        if not payload.topic_id:
+            raise HTTPException(status_code=400, detail="Topic chat requires topic_id.")
+        topic = (
+            db.query(CourseTopic)
+            .filter(CourseTopic.id == payload.topic_id, CourseTopic.deleted_at.is_(None))
+            .first()
+        )
+        if not topic:
+            raise HTTPException(status_code=404, detail="Topic not found.")
+        ensure_course_access(db, user=user, course_id=topic.course_id)
+        return
+    if payload.scope_type == ChatScope.COURSE:
+        if not payload.course_id:
+            raise HTTPException(status_code=400, detail="Course chat requires course_id.")
+        ensure_course_access(db, user=user, course_id=payload.course_id)
+
+
 def create_thread(db: Session, *, user: User, payload: ChatThreadCreate) -> ChatThread:
+    _validate_thread_scope(db, user=user, payload=payload)
     thread = ChatThread(
         user_id=user.id,
         course_id=payload.course_id,
@@ -37,13 +70,19 @@ def add_message(db: Session, *, user: User, thread: ChatThread, payload: ChatMes
     question = ChatMessage(thread_id=thread.id, role="user", content=payload.content, metadata_json={})
     db.add(question)
     db.flush()
-    chunks = retrieve_relevant_chunks(db, thread=thread, query=payload.content)
-    answer_text = answer_question(
-        payload.content,
-        [chunk.text for chunk in chunks],
-        strict_mode=thread.strict_mode,
-        answer_style=thread.answer_style.value,
-    )
+    chunks = retrieve_relevant_chunks(db, thread=thread, query=payload.content, user=user)
+    if thread.strict_mode and not chunks:
+        answer_text = (
+            "I couldn't find enough relevant uploaded source material to answer that strictly from "
+            "your workspace. Upload or select a more specific material, then ask again."
+        )
+    else:
+        answer_text = answer_question(
+            payload.content,
+            [chunk.text for chunk in chunks],
+            strict_mode=thread.strict_mode,
+            answer_style=thread.answer_style.value,
+        )
     answer = ChatMessage(
         thread_id=thread.id,
         role="assistant",

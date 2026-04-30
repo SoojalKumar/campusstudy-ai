@@ -4,7 +4,7 @@ from math import sqrt
 
 from sqlalchemy.orm import Session
 
-from app.models.entities import ChatThread, Material, MaterialChunk
+from app.models.entities import ChatThread, Material, MaterialChunk, User
 from app.providers.factory import get_embedding_provider
 
 
@@ -21,27 +21,25 @@ def retrieve_relevant_chunks(
     db: Session,
     thread: ChatThread,
     query: str,
+    user: User,
     top_k: int = 5,
 ) -> list[MaterialChunk]:
     provider = get_embedding_provider()
     query_vector = provider.embed_texts([query])[0]
     base_query = db.query(MaterialChunk)
+    material_scope = db.query(Material.id).filter(Material.deleted_at.is_(None))
+    if user.role.value not in {"admin", "moderator"}:
+        material_scope = material_scope.filter(Material.owner_user_id == user.id)
     if thread.material_id:
-        base_query = base_query.filter(MaterialChunk.material_id == thread.material_id)
+        material_scope = material_scope.filter(Material.id == thread.material_id)
     elif thread.topic_id:
-        material_ids = (
-            db.query(Material.id)
-            .filter(Material.topic_id == thread.topic_id, Material.deleted_at.is_(None))
-            .subquery()
-        )
-        base_query = base_query.filter(MaterialChunk.material_id.in_(material_ids))
+        material_scope = material_scope.filter(Material.topic_id == thread.topic_id)
     elif thread.course_id:
-        material_ids = (
-            db.query(Material.id)
-            .filter(Material.course_id == thread.course_id, Material.deleted_at.is_(None))
-            .subquery()
-        )
-        base_query = base_query.filter(MaterialChunk.material_id.in_(material_ids))
+        material_scope = material_scope.filter(Material.course_id == thread.course_id)
+    base_query = base_query.filter(
+        MaterialChunk.material_id.in_(material_scope.subquery()),
+        MaterialChunk.deleted_at.is_(None),
+    )
 
     chunks = base_query.limit(250).all()
     scored = [
