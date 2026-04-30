@@ -12,17 +12,22 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("StudentPass123!");
   const [error, setError] = useState<string | null>(null);
 
-  async function login() {
+  async function loginWithCredentials(nextEmail = email, nextPassword = password) {
     try {
+      setError(null);
       const response = await apiFetch<{ access_token: string }>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: nextEmail, password: nextPassword })
       });
       await setToken(response.access_token);
       router.replace("/(tabs)");
     } catch (nextError) {
       setError((nextError as Error).message);
     }
+  }
+
+  async function login() {
+    await loginWithCredentials();
   }
 
   return (
@@ -65,6 +70,24 @@ export default function LoginScreen() {
       >
         <Text style={{ color: "#081019", fontWeight: "700", textAlign: "center" }}>Sign In</Text>
       </Pressable>
+      <View style={{ gap: 10, marginTop: 4 }}>
+        <Pressable
+          onPress={() => loginWithCredentials("maya@student.pacific.edu", "StudentPass123!")}
+          style={{ borderColor: "rgba(115,201,199,0.36)", borderRadius: 18, borderWidth: 1, padding: 14 }}
+        >
+          <Text style={{ color: "#73c9c7", fontWeight: "800", textAlign: "center" }}>
+            Enter as Maya, CS student
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => loginWithCredentials("admin@pacific.edu", "AdminPass123!")}
+          style={{ borderColor: "rgba(246,215,139,0.34)", borderRadius: 18, borderWidth: 1, padding: 14 }}
+        >
+          <Text style={{ color: "#f6d78b", fontWeight: "800", textAlign: "center" }}>
+            Enter as Campus Admin
+          </Text>
+        </Pressable>
+      </View>
     </Screen>
   );
 }

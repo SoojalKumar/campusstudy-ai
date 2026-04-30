@@ -1,3 +1,4 @@
+import type { ChatThreadDTO, FlashcardDeckDTO } from "@campusstudy/types";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -20,9 +21,21 @@ export default function MobileDashboardScreen() {
     queryFn: () => apiFetch<MobileDashboardSnapshot>("/dashboard/overview", { token }),
     enabled: hydrated && Boolean(token)
   });
+  const deckListQuery = useQuery<FlashcardDeckDTO[]>({
+    queryKey: ["mobile-flashcard-decks"],
+    queryFn: () => apiFetch<FlashcardDeckDTO[]>("/flashcards/decks", { token }),
+    enabled: hydrated && Boolean(token)
+  });
+  const threadListQuery = useQuery<ChatThreadDTO[]>({
+    queryKey: ["mobile-chat-threads"],
+    queryFn: () => apiFetch<ChatThreadDTO[]>("/chat/threads", { token }),
+    enabled: hydrated && Boolean(token)
+  });
   const dashboard = dashboardQuery.data ?? mobileDashboard;
   const isDemoMode = hydrated && !token;
   const weakestTopic = dashboard.weakTopics[0];
+  const reviewHref = `/flashcards/${deckListQuery.data?.[0]?.id ?? "demo"}`;
+  const chatHref = `/chat/${threadListQuery.data?.[0]?.id ?? "demo"}`;
 
   return (
     <Screen>
@@ -36,12 +49,12 @@ export default function MobileDashboardScreen() {
           Pick the next useful action before class: review due cards, patch a weak topic, or skim the latest notes.
         </Text>
         <View style={styles.heroActions}>
-          <Link href="/flashcards/demo" asChild>
+          <Link href={reviewHref as any} asChild>
             <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
               <Text style={styles.primaryButtonText}>Start review</Text>
             </Pressable>
           </Link>
-          <Link href="/chat/demo" asChild>
+          <Link href={chatHref as any} asChild>
             <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
               <Text style={styles.secondaryButtonText}>Ask sources</Text>
             </Pressable>
