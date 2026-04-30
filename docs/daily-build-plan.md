@@ -2,15 +2,15 @@
 
 This plan keeps the project moving in focused daily commits while protecting the product goal: CampusStudy AI should feel like a premium university study workspace on both web and mobile, not a generic chatbot.
 
-## Current State After Live Pilot Push
+## Current State After Production-Mode Cleanup
 
-- Web app has landing, auth, dashboard, courses, material detail, source actions, chat, flashcards, quizzes, and admin flows with live API fallbacks.
+- Web app has landing, auth, dashboard, courses, material detail, source actions, chat, flashcards, quizzes, and admin flows backed by authenticated API data.
 - Web material detail can now generate revision notes, flashcard decks, and quiz sets directly from a processed source.
 - Mobile app has Expo Router navigation, secure token storage, React Query, premium primitives, live dashboard/courses, flashcards, quizzes, material generation, and source-grounded chat screens.
 - Flashcards now support API-backed review scheduling on web and mobile, including due-card state and tactile review loops.
 - Quizzes now support focused web/mobile players, scored attempts, answer feedback, topic performance, and backend scoring coverage.
 - Backend has auth, course/material schema, upload, processing jobs, extraction, generated study assets, source-scoped RAG chat, generation authorization checks, quiz/flashcard tests, and CI validation gates.
-- The seeded web/mobile pilot can now run as a real API-backed session: one-click seeded login, live dashboard shortcuts, discoverable decks/quizzes, persisted RAG chat threads, material-level generation, and a `make pilot-smoke` API flow.
+- The web/mobile app now behaves like a real product surface: no client-side demo fallbacks, no one-click fixture login, API-backed study assets, persisted RAG chat threads, material-level generation, and a `make pilot-smoke` API flow for local verification.
 
 ## Product Bar
 
@@ -37,7 +37,7 @@ The product should feel like a serious campus study command center:
 
 - Build shared mobile theme tokens and reusable primitives: screen, card, pill, metric tile, action row, empty state, and loading state.
 - Replace inline mobile styles with intentional components.
-- Wire mobile dashboard to `/dashboard/overview` with fallback states.
+- Wire mobile dashboard to `/dashboard/overview` with authenticated loading, empty, and error states.
 - Add a premium dashboard layout: today stack, due cards, weak topics, latest notes, recent uploads.
 - Add mobile validation to CI or at least TypeScript/lint script readiness.
 
@@ -104,14 +104,14 @@ The product should feel like a serious campus study command center:
 
 - Verify full Docker Compose boot from clean checkout.
 - Add a smoke script for API health, seed login, dashboard, material list, and web build.
-- Document the exact demo user flow.
+- Document the exact local smoke flow.
 - Fix any Docker/env drift.
 
 ### Day 16 - Visual Polish Pass
 
 - Web polish: landing, dashboard, upload, material detail, chat, quiz, flashcards, and admin.
 - Mobile polish: navigation, spacing, type scale, haptics-ready press states, skeletons, and transitions.
-- Remove obvious demo-looking copy where live data exists.
+- Remove obvious fixture-looking copy where API data exists.
 - Add final screenshots/docs notes if useful.
 
 ### Day 17 - Realistic AI/RAG Hardening
@@ -121,9 +121,9 @@ The product should feel like a serious campus study command center:
 - Add schema-repair failure tests.
 - Document provider switching and mock-vs-real limitations clearly.
 
-### Day 18 - Pilot Demo Readiness
+### Day 18 - Pilot Readiness
 
-- Create a full demo script: register/login, upload, processing, notes, quiz, flashcards, RAG chat, admin retry.
+- Create a full smoke script: register/login, upload, processing, notes, quiz, flashcards, RAG chat, admin retry.
 - Make seed data richer and more campus-real.
 - Add final README updates.
 - Confirm CI green and repo clean.
@@ -138,4 +138,4 @@ The product should feel like a serious campus study command center:
 
 ## Near-Term Priority
 
-Next priority should focus on operational confidence and processing visibility. The next best slice is: processing timeline polish, admin retry UX, Docker smoke verification from a clean checkout, and richer seed data for a complete upload-to-study-pack demo.
+Next priority should focus on operational confidence and processing visibility. The next best slice is: processing timeline polish, admin retry UX, Docker smoke verification from a clean checkout, and richer local fixtures for a complete upload-to-study-pack smoke flow.

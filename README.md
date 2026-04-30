@@ -23,7 +23,7 @@ CampusStudy AI is a university-focused AI study platform. Students upload lectur
 - generated notes, flashcards, quiz sets, study guides, and revision data
 - transcript storage with timestamps
 - student dashboard and admin metrics surface
-- seed data for a demo campus pilot
+- seed data for local development and smoke testing
 - backend unit tests, API integration tests, and a small web component test
 
 ## Monorepo structure
@@ -118,7 +118,7 @@ source .venv/bin/activate
 alembic upgrade head
 ```
 
-### 4. Seed demo data
+### 4. Seed local development data
 
 ```bash
 python -m app.seed.run
@@ -179,7 +179,7 @@ make docker-down
 make test
 ```
 
-## Demo accounts
+## Local development accounts
 
 - Admin: `admin@pacific.edu` / `AdminPass123!`
 - Student: `maya@student.pacific.edu` / `StudentPass123!`
@@ -228,17 +228,17 @@ CI:
 - GitHub Actions runs backend lint + pytest and web lint + test + build on every push to `main` and on pull requests.
 - Local `make preflight` is the fastest way to catch missing dependencies before pushing.
 
-## Seeded demo flow
+## Local smoke flow
 
 1. Start the API, worker, and web app.
 2. Run `make seed`.
 3. Open `http://localhost:3000/login`.
-4. Click `Enter as Maya, CS student` for a real seeded student session.
-5. Open Dashboard, then use `Live Study Packs` to jump into the seeded flashcard deck and quiz set.
-6. Open Study Chat, click `Start live thread`, ask a question, and inspect citations from uploaded chunks.
+4. Sign in with one of the local development accounts above.
+5. Open Dashboard, then use `Study Packs` to jump into an API-backed flashcard deck and quiz set.
+6. Start a source-grounded chat from Dashboard or the Study tab, ask a question, and inspect citations from uploaded chunks.
 7. Open a material detail page and use `Generate revision notes`, `Generate flashcard deck`, or `Generate quiz set`.
-8. Run the Expo mobile app, use the seeded login shortcuts, then open the Study tab for live deck/quiz/chat shortcuts.
-9. Click `Enter as Campus Admin` on the login page to inspect metrics, users, uploads, and processing jobs.
+8. Run the Expo mobile app, sign in, then open the Study tab for synced deck/quiz/chat entry points.
+9. Sign in as the local admin account to inspect metrics, users, uploads, and processing jobs.
 
 You can smoke-test the same flow through the API:
 
@@ -246,13 +246,13 @@ You can smoke-test the same flow through the API:
 make pilot-smoke
 ```
 
-The smoke test logs in as the seeded student and admin, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, posts a question, and verifies citations exist.
+The smoke test logs in with local student and admin fixtures, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, posts a question, and verifies citations exist.
 
 ## Known limitations
 
 - Real speech-to-text is abstracted but defaults to a working mock provider for local MVP reliability.
 - Meta Llama integration is implemented against a compatible chat-completions shape and may require endpoint-specific tuning in production.
-- Some screens still keep demo fallbacks for resilience when the API is offline, but the main seeded web/mobile pilot flow now uses live API sessions, seeded IDs, persisted chat threads, flashcard decks, quiz sets, material generation, and admin metrics.
+- Web and mobile no longer ship client-side demo fallbacks; signed-out users see real auth/empty states, and study data comes from the API.
 - Offline mobile caching is designed for later extension rather than fully implemented in this pass.
 
 ## Future roadmap
