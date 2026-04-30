@@ -1,6 +1,6 @@
 "use client";
 
-import type { QuizAttemptDTO, QuizQuestionDTO, QuizSetDTO } from "@campusstudy/types";
+import type { QuizAttemptDTO, QuizPerformanceOverviewDTO, QuizQuestionDTO, QuizSetDTO } from "@campusstudy/types";
 import { useMutation } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -8,7 +8,6 @@ import { useState } from "react";
 import { LayoutShell } from "@/components/layout-shell";
 import { apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
-import { demoQuizPerformance, demoQuizSet } from "@/lib/demo-data";
 import { useSession } from "@/lib/session";
 
 type AnswerMap = Record<string, string>;
@@ -22,50 +21,21 @@ function isCorrect(question: QuizQuestionDTO, answer?: string) {
   return answer.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
 }
 
-function scoreLocalAttempt(quiz: QuizSetDTO, answers: AnswerMap): QuizAttemptDTO {
-  const answerRows = quiz.questions.map((question) => {
-    const submittedAnswer = answers[question.id] ?? "";
-    const correct = isCorrect(question, submittedAnswer) === true;
-    return {
-      correctAnswer: question.correctAnswer ?? null,
-      feedback: question.explanation,
-      id: `${question.id}-answer`,
-      isCorrect: correct,
-      quizQuestionId: question.id,
-      scoreAwarded: correct ? 1 : 0,
-      submittedAnswer
-    };
-  });
-  const correctCount = answerRows.filter((answer) => answer.isCorrect).length;
-  return {
-    answers: answerRows,
-    completedAt: new Date().toISOString(),
-    correctCount,
-    id: "local-attempt",
-    quizSetId: quiz.id,
-    score: correctCount / Math.max(1, quiz.questions.length),
-    totalQuestions: quiz.questions.length
-  };
-}
-
 export default function QuizPage() {
   const params = useParams<{ quizId?: string }>();
-  const quizId = params.quizId ?? "demo";
+  const quizId = params.quizId;
   const { token } = useSession();
   const [activeIndex, setActiveIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [startedAt] = useState(() => Date.now());
-  const [localAttempt, setLocalAttempt] = useState<QuizAttemptDTO | null>(null);
 
   const quizQuery = useAuthedQuery<QuizSetDTO>({
     queryKey: ["quiz-set", quizId],
-    path: `/quizzes/sets/${quizId}`,
-    fallbackData: demoQuizSet
+    path: `/quizzes/sets/${quizId}`
   });
-  const performanceQuery = useAuthedQuery({
+  const performanceQuery = useAuthedQuery<QuizPerformanceOverviewDTO>({
     queryKey: ["quiz-performance"],
-    path: "/quizzes/performance/overview",
-    fallbackData: demoQuizPerformance
+    path: "/quizzes/performance/overview"
   });
   const quiz = quizQuery.data;
 
@@ -78,19 +48,19 @@ export default function QuizPage() {
             submittedAnswer
           })),
           durationSeconds: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-          quizSetId: quiz.id
+          quizSetId: quiz?.id
         }),
         method: "POST",
         token
       })
   });
 
-  const attempt = submitMutation.data ?? localAttempt;
-  const activeQuestion = quiz.questions[activeIndex] ?? quiz.questions[0];
+  const attempt = submitMutation.data;
+  const activeQuestion = quiz?.questions[activeIndex] ?? quiz?.questions[0];
   const selectedAnswer = activeQuestion ? answers[activeQuestion.id] : undefined;
   const answeredCount = Object.keys(answers).length;
-  const progress = quiz.questions.length ? Math.round((answeredCount / quiz.questions.length) * 100) : 100;
-  const canSubmit = answeredCount === quiz.questions.length && !attempt;
+  const progress = quiz?.questions.length ? Math.round((answeredCount / quiz.questions.length) * 100) : 0;
+  const canSubmit = Boolean(token && quiz) && answeredCount === (quiz?.questions.length ?? 0) && !attempt;
   const scorePercent = attempt ? Math.round(attempt.score * 100) : null;
 
   const chooseAnswer = (question: QuizQuestionDTO, answer: string) => {
@@ -100,19 +70,40 @@ export default function QuizPage() {
 
   const finishQuiz = () => {
     if (!canSubmit) return;
-    if (token) {
-      submitMutation.mutate();
-      return;
-    }
-    setLocalAttempt(scoreLocalAttempt(quiz, answers));
+    submitMutation.mutate();
   };
 
   const resetQuiz = () => {
     setAnswers({});
     setActiveIndex(0);
-    setLocalAttempt(null);
     submitMutation.reset();
   };
+
+  if (!quiz && quizQuery.hydrated) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
+          <p className="text-xs uppercase tracking-[0.35em] text-tide">Quiz Focus</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">
+            {quizQuery.hasSession ? "Quiz not found" : "Sign in to take quizzes"}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+            Quiz sets are generated from your uploaded materials and scored against your account.
+          </p>
+        </div>
+      </LayoutShell>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+          Loading quiz...
+        </div>
+      </LayoutShell>
+    );
+  }
 
   return (
     <LayoutShell>
@@ -131,15 +122,9 @@ export default function QuizPage() {
             </div>
           </div>
 
-          {!quizQuery.hasSession && quizQuery.hydrated ? (
-            <p className="mt-5 rounded-2xl border border-gold/20 bg-gold/10 px-4 py-3 text-sm text-gold">
-              Demo quiz is showing. Sign in to save attempts and sync weak-topic mastery.
-            </p>
-          ) : null}
-
           {quizQuery.isError ? (
             <p className="mt-5 rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 text-sm text-orange-100">
-              Live quiz could not load, so the local exam sprint is ready.
+              This quiz could not load. Refresh or open a quiz from your dashboard.
             </p>
           ) : null}
 
@@ -333,7 +318,7 @@ export default function QuizPage() {
             <p className="text-xs uppercase tracking-[0.25em] text-ember">Topic Performance</p>
             <h2 className="mt-2 text-xl font-semibold text-white">Weak areas after attempts</h2>
             <div className="mt-5 space-y-3">
-              {performanceQuery.data.weakTopics.map((topic) => (
+              {performanceQuery.data?.weakTopics.map((topic) => (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4" key={topic.topicId}>
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium text-white">{topic.topic ?? "Untitled topic"}</p>
@@ -347,7 +332,7 @@ export default function QuizPage() {
               ))}
             </div>
             <p className="mt-4 text-sm text-slate-400">
-              Average score: <span className="font-semibold text-tide">{Math.round(performanceQuery.data.averageScore * 100)}%</span>
+              Average score: <span className="font-semibold text-tide">{Math.round((performanceQuery.data?.averageScore ?? 0) * 100)}%</span>
             </p>
           </div>
         </aside>

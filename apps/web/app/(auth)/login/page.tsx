@@ -10,7 +10,7 @@ import { useSession } from "@/lib/session";
 export default function LoginPage() {
   const router = useRouter();
   const { setSession } = useSession();
-  const [form, setForm] = useState({ email: "maya@student.pacific.edu", password: "StudentPass123!" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null);
 
@@ -40,46 +40,24 @@ export default function LoginPage() {
     <main className="mx-auto flex min-h-screen max-w-5xl items-center px-6 py-12">
       <div className="grid w-full gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
-          <p className="text-xs uppercase tracking-[0.35em] text-tide">Local Pilot</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Jump into the seeded campus workspace.</h1>
+          <p className="text-xs uppercase tracking-[0.35em] text-tide">Secure Workspace</p>
+          <h1 className="mt-3 text-4xl font-semibold text-white">Sign in to your course study system.</h1>
           <p className="mt-4 text-sm leading-6 text-slate-300">
-            Use these buttons after `make seed` or Docker seed. They log into real API accounts, not a fake client-only
-            demo, so uploads, chat, flashcards, quizzes, and admin checks all hit the backend.
+            CampusStudy AI keeps uploads, generated notes, quizzes, flashcards, transcripts, and source-grounded chat
+            tied to your student account and enrolled courses.
           </p>
-          <div className="mt-6 grid gap-3">
-            <button
-              className="rounded-2xl bg-white px-5 py-4 text-left font-semibold text-slate-950 transition hover:bg-tide disabled:opacity-50"
-              disabled={Boolean(loadingLabel)}
-              onClick={() =>
-                loginWith(
-                  { email: "maya@student.pacific.edu", password: "StudentPass123!" },
-                  "student"
-                )
-              }
-              type="button"
-            >
-              {loadingLabel === "student" ? "Signing in..." : "Enter as Maya, CS student"}
-              <span className="mt-1 block text-xs font-medium text-slate-600">
-                Dashboard, CS220 materials, RAG chat, quiz attempts, flashcards.
-              </span>
-            </button>
-            <button
-              className="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-4 text-left font-semibold text-white transition hover:border-gold/40 disabled:opacity-50"
-              disabled={Boolean(loadingLabel)}
-              onClick={() => loginWith({ email: "admin@pacific.edu", password: "AdminPass123!" }, "admin")}
-              type="button"
-            >
-              {loadingLabel === "admin" ? "Signing in..." : "Enter as Campus Admin"}
-              <span className="mt-1 block text-xs font-medium text-slate-400">
-                Users, uploads, failures, processing jobs, metrics.
-              </span>
-            </button>
+          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
+            <p className="text-sm font-semibold text-white">What happens after sign-in</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              You land in a real workspace backed by the API: upload materials, generate study packs, review due cards,
+              and ask cited questions across your courses.
+            </p>
           </div>
         </section>
 
         <form onSubmit={onSubmit} className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-8">
-          <h2 className="text-3xl font-semibold text-white">Sign in manually</h2>
-          <p className="mt-2 text-sm text-slate-300">Use a seeded user or your own local account.</p>
+          <h2 className="text-3xl font-semibold text-white">Sign in</h2>
+          <p className="mt-2 text-sm text-slate-300">Use your university email and password.</p>
         <div className="mt-6 space-y-4">
           <input
             value={form.email}

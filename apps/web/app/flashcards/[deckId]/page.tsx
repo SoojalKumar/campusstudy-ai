@@ -8,7 +8,6 @@ import { useState } from "react";
 import { LayoutShell } from "@/components/layout-shell";
 import { apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
-import { demoFlashcardDeck } from "@/lib/demo-data";
 import { useSession } from "@/lib/session";
 
 const reviewActions = [
@@ -36,7 +35,7 @@ function formatDue(dueAt?: string | null) {
 
 export default function FlashcardDeckPage() {
   const params = useParams<{ deckId: string }>();
-  const deckId = params.deckId ?? "demo";
+  const deckId = params.deckId;
   const { token } = useSession();
   const queryClient = useQueryClient();
   const [revealed, setRevealed] = useState(false);
@@ -45,8 +44,7 @@ export default function FlashcardDeckPage() {
 
   const deckQuery = useAuthedQuery<FlashcardDeckDTO>({
     queryKey: ["flashcard-deck", deckId],
-    path: `/flashcards/decks/${deckId}`,
-    fallbackData: demoFlashcardDeck
+    path: `/flashcards/decks/${deckId}`
   });
 
   const reviewMutation = useMutation({
@@ -69,24 +67,40 @@ export default function FlashcardDeckPage() {
   });
 
   const deck = deckQuery.data;
-  const dueCards = deck.flashcards.filter((card) => isDue(card) && !reviewedIds.has(card.id));
+  const dueCards = deck?.flashcards.filter((card) => isDue(card) && !reviewedIds.has(card.id)) ?? [];
   const activeCard = dueCards[activeIndex] ?? dueCards[0];
-  const completedCount = deck.flashcards.length - dueCards.length;
-  const progress = deck.flashcards.length ? Math.round((completedCount / deck.flashcards.length) * 100) : 100;
+  const completedCount = deck ? deck.flashcards.length - dueCards.length : 0;
+  const progress = deck?.flashcards.length ? Math.round((completedCount / deck.flashcards.length) * 100) : 0;
 
   const reviewCard = (card: FlashcardDTO, rating: number) => {
-    if (token) {
-      reviewMutation.mutate({ flashcardId: card.id, rating });
-      return;
-    }
-    setReviewedIds((current) => {
-      const next = new Set(current);
-      next.add(card.id);
-      return next;
-    });
-    setActiveIndex(0);
-    setRevealed(false);
+    reviewMutation.mutate({ flashcardId: card.id, rating });
   };
+
+  if (!deck && deckQuery.hydrated) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
+          <p className="text-xs uppercase tracking-[0.35em] text-gold">Spaced Repetition</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">
+            {deckQuery.hasSession ? "Deck not found" : "Sign in to review flashcards"}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+            Flashcard decks are generated from your uploaded materials and synced to your account.
+          </p>
+        </div>
+      </LayoutShell>
+    );
+  }
+
+  if (!deck) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+          Loading flashcards...
+        </div>
+      </LayoutShell>
+    );
+  }
 
   return (
     <LayoutShell>
@@ -102,15 +116,9 @@ export default function FlashcardDeckPage() {
             </div>
           </div>
 
-          {!deckQuery.hasSession && deckQuery.hydrated ? (
-            <p className="mt-4 rounded-2xl border border-gold/20 bg-gold/10 px-4 py-3 text-sm text-gold">
-              Demo deck is showing. Sign in to save review history and sync the next due date.
-            </p>
-          ) : null}
-
           {deckQuery.isError ? (
             <p className="mt-4 rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 text-sm text-orange-100">
-              Live deck could not load, so the local review sprint is still available.
+              This deck could not load. Refresh or open a deck from your dashboard.
             </p>
           ) : null}
 
@@ -169,7 +177,7 @@ export default function FlashcardDeckPage() {
                   {reviewActions.map((action) => (
                     <button
                       className={`rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${action.className}`}
-                      disabled={reviewMutation.isPending}
+                      disabled={!token || reviewMutation.isPending}
                       key={action.label}
                       onClick={() => reviewCard(activeCard, action.rating)}
                       type="button"

@@ -22,21 +22,14 @@ type ProcessingJob = {
 export default function AdminPage() {
   const metricsQuery = useAuthedQuery<AdminMetrics>({
     queryKey: ["admin", "metrics"],
-    path: "/admin/metrics",
-    fallbackData: {
-      totalUsers: 4,
-      totalCourses: 5,
-      totalMaterials: 2,
-      failedJobs: 1,
-      activeStudents: 3
-    }
+    path: "/admin/metrics"
   });
   const jobsQuery = useAuthedQuery<ProcessingJob[]>({
     queryKey: ["admin", "jobs"],
-    path: "/admin/jobs",
-    fallbackData: []
+    path: "/admin/jobs"
   });
   const metrics = metricsQuery.data;
+  const jobs = jobsQuery.data ?? [];
 
   return (
     <LayoutShell>
@@ -50,9 +43,9 @@ export default function AdminPage() {
         </section>
         <div className="grid gap-6 lg:grid-cols-3">
           {[
-            ["Users", `${metrics.totalUsers}`],
-            ["Processing failures", `${metrics.failedJobs}`],
-            ["Open jobs", `${jobsQuery.data.length}`]
+            ["Users", `${metrics?.totalUsers ?? "-"}`],
+            ["Processing failures", `${metrics?.failedJobs ?? "-"}`],
+            ["Open jobs", `${jobs.length}`]
           ].map(([label, value]) => (
             <div key={label} className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
               <p className="text-sm text-slate-400">{label}</p>
@@ -63,8 +56,8 @@ export default function AdminPage() {
         <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
           <h2 className="text-xl font-semibold text-white">Job logs</h2>
           <div className="mt-4 space-y-3">
-            {jobsQuery.data.length ? (
-              jobsQuery.data.map((job) => (
+            {jobs.length ? (
+              jobs.map((job) => (
                 <div key={job.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
                   {job.status} :: {job.stage} :: {job.materialId}
                   {job.errorMessage ? ` :: ${job.errorMessage}` : ""}

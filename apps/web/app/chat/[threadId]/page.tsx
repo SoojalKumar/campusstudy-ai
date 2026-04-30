@@ -17,7 +17,6 @@ import { LayoutShell } from "@/components/layout-shell";
 import { SourceCitationCard } from "@/components/source-citation-card";
 import { apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
-import { demoChatThread, demoCourses } from "@/lib/demo-data";
 import { useSession } from "@/lib/session";
 
 type MaterialSummary = {
@@ -38,11 +37,11 @@ const answerStyles: ChatAnswerStyle[] = [
 
 export default function ChatThreadPage() {
   const params = useParams<{ threadId?: string }>();
-  const threadId = params.threadId ?? "demo";
+  const threadId = params.threadId;
   const router = useRouter();
   const queryClient = useQueryClient();
   const { token } = useSession();
-  const [message, setMessage] = useState("How would this show up on an exam?");
+  const [message, setMessage] = useState("");
   const [scopeType, setScopeType] = useState<ChatScope>("workspace");
   const [answerStyle, setAnswerStyle] = useState<ChatAnswerStyle>("exam-oriented");
   const [strictMode, setStrictMode] = useState(true);
@@ -50,30 +49,26 @@ export default function ChatThreadPage() {
   const threadQuery = useAuthedQuery<ChatThreadDTO>({
     queryKey: ["chat-thread", threadId],
     path: `/chat/threads/${threadId}`,
-    fallbackData: demoChatThread,
-    enabled: threadId !== "demo"
+    enabled: Boolean(threadId)
   });
   const threadListQuery = useAuthedQuery<ChatThreadDTO[]>({
     queryKey: ["chat-threads"],
-    path: "/chat/threads",
-    fallbackData: []
+    path: "/chat/threads"
   });
   const coursesQuery = useAuthedQuery<CourseSummary[]>({
     queryKey: ["courses"],
-    path: "/courses",
-    fallbackData: demoCourses
+    path: "/courses"
   });
   const materialsQuery = useAuthedQuery<MaterialSummary[]>({
     queryKey: ["materials"],
-    path: "/materials",
-    fallbackData: []
+    path: "/materials"
   });
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedMaterialId, setSelectedMaterialId] = useState("");
   const thread = threadQuery.data;
-  const latestAssistant = [...thread.messages].reverse().find((item) => item.role === "assistant");
+  const latestAssistant = [...(thread?.messages ?? [])].reverse().find((item) => item.role === "assistant");
   const citations = latestAssistant?.citations ?? [];
-  const canSend = Boolean(token) && threadId !== "demo" && message.trim().length > 0;
+  const canSend = Boolean(token && threadId && thread) && message.trim().length > 0;
 
   const createThreadMutation = useMutation({
     mutationFn: () => {
@@ -121,6 +116,7 @@ export default function ChatThreadPage() {
     createThreadMutation.isPending ||
     (scopeType === "material" && !selectedMaterialId) ||
     (scopeType === "course" && !selectedCourseId);
+  const shouldShowCreator = !thread && threadQuery.hydrated;
 
   return (
     <LayoutShell>
@@ -129,24 +125,26 @@ export default function ChatThreadPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-tide">RAG Chat</p>
-              <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-white">{thread.title}</h1>
+              <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-white">
+                {thread?.title ?? "Start a source-grounded chat"}
+              </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
                 Ask questions over uploaded course material with citations, strict-source mode, and exam-ready answer
                 styles.
               </p>
             </div>
             <span className="rounded-full border border-gold/20 bg-gold/10 px-4 py-2 text-sm font-semibold text-gold">
-              {thread.strictMode ? "Strict sources" : "Flexible"}
+              {thread?.strictMode ?? strictMode ? "Strict sources" : "Flexible"}
             </span>
           </div>
 
           {!threadQuery.hasSession && threadQuery.hydrated ? (
             <p className="mt-5 rounded-2xl border border-gold/20 bg-gold/10 px-4 py-3 text-sm text-gold">
-              Static demo chat is showing. Use seeded login to create a real thread and persist messages.
+              Sign in to create RAG threads and persist source-grounded conversations.
             </p>
           ) : null}
 
-          {threadId === "demo" ? (
+          {shouldShowCreator ? (
             <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -200,7 +198,7 @@ export default function ChatThreadPage() {
                       value={selectedCourseId}
                     >
                       <option value="">Choose a course</option>
-                      {coursesQuery.data.map((course) => (
+                      {(coursesQuery.data ?? []).map((course) => (
                         <option key={course.id} value={course.id}>
                           {course.code} - {course.title}
                         </option>
@@ -217,7 +215,7 @@ export default function ChatThreadPage() {
                       value={selectedMaterialId}
                     >
                       <option value="">Choose an uploaded material</option>
-                      {materialsQuery.data.map((material) => (
+                      {(materialsQuery.data ?? []).map((material) => (
                         <option key={material.id} value={material.id}>
                           {material.title} - {material.processingStatus}
                         </option>
@@ -244,7 +242,7 @@ export default function ChatThreadPage() {
           ) : null}
 
           <div className="mt-6 space-y-4">
-            {thread.messages.length ? (
+            {thread?.messages.length ? (
               thread.messages.map((chatMessage) => (
                 <div
                   className={
@@ -261,9 +259,11 @@ export default function ChatThreadPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-sm text-slate-300">
-                This thread is ready. Ask a question and citations will appear beside the answer.
-              </div>
+              thread ? (
+                <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-sm text-slate-300">
+                  This thread is ready. Ask a question and citations will appear beside the answer.
+                </div>
+              ) : null
             )}
           </div>
 
@@ -276,14 +276,14 @@ export default function ChatThreadPage() {
           >
             <textarea
               className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-sm leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-tide/50"
-              disabled={!token || threadId === "demo"}
+              disabled={!token || !threadId || !thread}
               onChange={(event) => setMessage(event.target.value)}
               placeholder="Ask about exam traps, lecture concepts, or confusing passages..."
               value={message}
             />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-slate-400">
-                {threadId === "demo" ? "Start a live thread before sending." : `${thread.answerStyle} mode`}
+                {thread ? `${thread.answerStyle} mode` : "Start a thread before sending."}
               </p>
               <button
                 className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-tide disabled:cursor-not-allowed disabled:opacity-50"
@@ -304,8 +304,8 @@ export default function ChatThreadPage() {
             <p className="text-xs uppercase tracking-[0.25em] text-ember">Recent Threads</p>
             <h2 className="mt-2 text-xl font-semibold text-white">Live conversations</h2>
             <div className="mt-4 space-y-3">
-              {threadListQuery.data.length ? (
-                threadListQuery.data.map((item) => (
+              {(threadListQuery.data ?? []).length ? (
+                (threadListQuery.data ?? []).map((item) => (
                   <Link
                     className="block rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/30"
                     href={`/chat/${item.id}`}

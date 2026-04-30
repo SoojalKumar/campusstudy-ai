@@ -16,10 +16,10 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href="/dashboard"
+              href="/login"
               className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950"
             >
-              Enter Demo Workspace
+              Open workspace
             </Link>
             <Link
               href="/register"
@@ -46,8 +46,8 @@ export default function LandingPage() {
           </div>
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-gradient-to-br from-tide/15 to-ember/10 p-5">
             <p className="text-sm text-slate-200">
-              “Week 6 Algorithms” uploaded. Transcript cleaned, flashcards due tomorrow, exam-style
-              quiz ready, weak topic detected: graph tracing.
+              Upload a lecture pack, generate a revision sheet, then ask exam-style questions with citations back to
+              the exact source pages, slides, or timestamps.
             </p>
           </div>
         </section>
@@ -55,4 +55,3 @@ export default function LandingPage() {
     </main>
   );
 }
-

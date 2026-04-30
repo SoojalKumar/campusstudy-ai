@@ -78,7 +78,7 @@ export function MaterialUploadPanel({ courses }: MaterialUploadPanelProps) {
         <p className="text-sm text-slate-400">
           {hasSession
             ? "Upload starts the full extraction, chunking, embedding, and study asset pipeline."
-            : "Sign in first to use the real upload pipeline. Demo mode stays visible without auth."}
+            : "Sign in first to upload materials into the processing pipeline."}
         </p>
         <button
           type="button"

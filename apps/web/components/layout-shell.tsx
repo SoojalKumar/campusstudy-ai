@@ -8,9 +8,6 @@ import { useSession } from "@/lib/session";
 const navItems: Array<{ href: string; label: string }> = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/courses", label: "Courses" },
-  { href: "/flashcards/demo", label: "Flashcards" },
-  { href: "/quizzes/demo", label: "Quizzes" },
-  { href: "/chat/demo", label: "Study Chat" },
   { href: "/admin", label: "Admin" }
 ];
 
@@ -48,8 +45,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
           <div className="mt-auto rounded-3xl border border-white/10 bg-slate-950/60 p-4">
-            <p className="text-sm font-medium text-white">{user?.name ?? "Demo student"}</p>
-            <p className="mt-1 text-xs text-slate-400">{user?.email ?? "student.pacific.edu"}</p>
+            <p className="text-sm font-medium text-white">{user?.name ?? "Signed out"}</p>
+            <p className="mt-1 text-xs text-slate-400">{user?.email ?? "Sign in to access your workspace"}</p>
             {user ? (
               <button
                 className="mt-4 w-full rounded-2xl bg-ember px-4 py-3 text-sm font-semibold text-ink"
@@ -63,7 +60,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 className="mt-4 block w-full rounded-2xl bg-white px-4 py-3 text-center text-sm font-semibold text-slate-950"
                 href="/login"
               >
-                Sign in for live mode
+                Sign in
               </Link>
             )}
           </div>

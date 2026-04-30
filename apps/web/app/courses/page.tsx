@@ -2,18 +2,17 @@
 
 import Link from "next/link";
 import { EmptyState, SectionCard } from "@campusstudy/ui";
+import type { CourseSummary } from "@campusstudy/types";
 
 import { LayoutShell } from "@/components/layout-shell";
-import { demoCourses } from "@/lib/demo-data";
 import { useAuthedQuery } from "@/lib/api-hooks";
 
 export default function CoursesPage() {
-  const coursesQuery = useAuthedQuery({
+  const coursesQuery = useAuthedQuery<CourseSummary[]>({
     queryKey: ["courses"],
-    path: "/courses",
-    fallbackData: demoCourses
+    path: "/courses"
   });
-  const courses = coursesQuery.data;
+  const courses = coursesQuery.data ?? [];
 
   return (
     <LayoutShell>
@@ -22,10 +21,10 @@ export default function CoursesPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-gold">Courses</p>
           <h1 className="mt-3 text-4xl font-semibold text-white">Organize work by semester, course, and topic.</h1>
           {!coursesQuery.hasSession && coursesQuery.hydrated ? (
-            <p className="mt-4 text-sm text-gold">Showing seeded course previews until you sign in.</p>
+            <p className="mt-4 text-sm text-gold">Sign in to see your enrolled courses and course materials.</p>
           ) : null}
         </section>
-        <SectionCard title="Enrolled Courses" eyebrow="Pilot Data">
+        <SectionCard title="Enrolled Courses" eyebrow="Workspace">
           {courses.length ? (
             <div className="grid gap-4 md:grid-cols-2">
               {courses.map((course) => (
@@ -47,7 +46,7 @@ export default function CoursesPage() {
           ) : (
             <EmptyState
               title="No courses yet"
-              description="Join a course or ask an admin to seed the semester offering."
+              description="Join a course or ask an admin to add the semester offering."
             />
           )}
         </SectionCard>

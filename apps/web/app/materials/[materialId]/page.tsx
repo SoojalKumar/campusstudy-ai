@@ -62,36 +62,25 @@ export default function MaterialDetailPage() {
   const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
   const materialQuery = useAuthedQuery<MaterialResponse>({
     queryKey: ["material", materialId],
-    path: `/materials/${materialId}`,
-    fallbackData: {
-      id: materialId,
-      title: `Material ${materialId}`,
-      fileName: "demo-material.txt",
-      mimeType: "text/plain",
-      processingStage: "completed",
-      processingStatus: "completed",
-      downloadUrl: null,
-      extractedText: null,
-      transcriptText: null
-    }
+    path: `/materials/${materialId}`
   });
   const notesQuery = useAuthedQuery<NoteResponse[]>({
     queryKey: ["notes", materialId],
-    path: `/notes/by-material/${materialId}`,
-    fallbackData: []
+    path: `/notes/by-material/${materialId}`
   });
   const transcriptQuery = useAuthedQuery<TranscriptSegment[]>({
     queryKey: ["transcript", materialId],
-    path: `/transcripts/materials/${materialId}/transcript`,
-    fallbackData: []
+    path: `/transcripts/materials/${materialId}/transcript`
   });
   const chunksQuery = useAuthedQuery<ChunkResponse[]>({
     queryKey: ["chunks", materialId],
-    path: `/materials/${materialId}/chunks`,
-    fallbackData: []
+    path: `/materials/${materialId}/chunks`
   });
   const material = materialQuery.data;
-  const canGenerate = hydrated && Boolean(token) && material.processingStatus === "completed";
+  const notes = notesQuery.data ?? [];
+  const transcriptSegments = transcriptQuery.data ?? [];
+  const chunks = chunksQuery.data ?? [];
+  const canGenerate = hydrated && Boolean(token) && material?.processingStatus === "completed";
   const noteMutation = useMutation({
     mutationFn: () =>
       apiFetch<NoteResponse>("/notes/generate", {
@@ -125,7 +114,7 @@ export default function MaterialDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["quiz-sets"] });
     }
   });
-  const citations = chunksQuery.data.slice(0, 4).map((chunk) => ({
+  const citations = chunks.slice(0, 4).map((chunk) => ({
     chunkId: chunk.id,
     sourceLabel:
       chunk.pageNumber != null
@@ -137,8 +126,37 @@ export default function MaterialDetailPage() {
             : "Chunk",
     snippet: chunk.text.slice(0, 220)
   }));
-  const sourcePreviewText = material.transcriptText || material.extractedText;
-  const supportsTimestampLinks = material.mimeType.startsWith("audio/") || material.mimeType.startsWith("video/");
+  const sourcePreviewText = material?.transcriptText || material?.extractedText;
+  const supportsTimestampLinks = material?.mimeType.startsWith("audio/") || material?.mimeType.startsWith("video/");
+
+  if (!material && materialQuery.hydrated) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
+          <p className="text-xs uppercase tracking-[0.35em] text-gold">Material Detail</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">
+            {materialQuery.hasSession ? "Material not found" : "Sign in to view this material"}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+            Materials are private to the student workspace that uploaded them.
+          </p>
+          <Link className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950" href="/login">
+            Sign in
+          </Link>
+        </div>
+      </LayoutShell>
+    );
+  }
+
+  if (!material) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+          Loading material...
+        </div>
+      </LayoutShell>
+    );
+  }
 
   return (
     <LayoutShell>
@@ -160,8 +178,8 @@ export default function MaterialDetailPage() {
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
             <h2 className="text-lg font-semibold text-white">Transcript timeline</h2>
             <div className="mt-4 space-y-3">
-              {transcriptQuery.data.length ? (
-                transcriptQuery.data.map((segment) => (
+              {transcriptSegments.length ? (
+                transcriptSegments.map((segment) => (
                   <div key={segment.id} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-300">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gold">
@@ -251,8 +269,8 @@ export default function MaterialDetailPage() {
           <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
             <h2 className="text-xl font-semibold text-white">Note outputs</h2>
             <ul className="mt-4 space-y-2 text-sm text-slate-300">
-              {notesQuery.data.length ? (
-                notesQuery.data.map((note) => <li key={note.id}>{note.noteType} · {note.title}</li>)
+              {notes.length ? (
+                notes.map((note) => <li key={note.id}>{note.noteType} · {note.title}</li>)
               ) : (
                 <li>No live notes found yet.</li>
               )}

@@ -26,21 +26,40 @@ export default function CourseDetailPage() {
   const courseId = params.courseId;
   const courseQuery = useAuthedQuery<CourseDetail>({
     queryKey: ["course", courseId],
-    path: `/courses/${courseId}`,
-    fallbackData: {
-      id: courseId,
-      code: "COURSE",
-      title: `Course ${courseId}`,
-      description: "Live course data appears here after sign-in.",
-      topics: []
-    }
+    path: `/courses/${courseId}`
   });
   const materialsQuery = useAuthedQuery<MaterialSummary[]>({
     queryKey: ["materials", courseId],
-    path: `/materials?course_id=${courseId}`,
-    fallbackData: []
+    path: `/materials?course_id=${courseId}`
   });
   const course = courseQuery.data;
+  const materials = materialsQuery.data ?? [];
+
+  if (!course && courseQuery.hydrated) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
+          <p className="text-xs uppercase tracking-[0.35em] text-tide">Course Workspace</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">
+            {courseQuery.hasSession ? "Course not found" : "Sign in to view this course"}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+            Course workspaces are scoped to your university account and enrollments.
+          </p>
+        </div>
+      </LayoutShell>
+    );
+  }
+
+  if (!course) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+          Loading course workspace...
+        </div>
+      </LayoutShell>
+    );
+  }
 
   return (
     <LayoutShell>
@@ -78,8 +97,8 @@ export default function CourseDetailPage() {
           <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
             <h2 className="text-xl font-semibold text-white">Course materials</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-300">
-              {materialsQuery.data.length ? (
-                materialsQuery.data.map((material) => (
+              {materials.length ? (
+                materials.map((material) => (
                   <Link
                     key={material.id}
                     href={`/materials/${material.id}`}

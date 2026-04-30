@@ -11,9 +11,9 @@ export function useAuthedQuery<T>({
   fallbackData,
   enabled = true
 }: {
-  queryKey: Array<string | number | null>;
+  queryKey: Array<string | number | null | undefined>;
   path: string;
-  fallbackData: T;
+  fallbackData?: T;
   enabled?: boolean;
 }) {
   const { token, hydrated } = useSession();
@@ -30,4 +30,3 @@ export function useAuthedQuery<T>({
     data: query.data ?? fallbackData
   };
 }
-
