@@ -1,4 +1,4 @@
-import type { ChatThreadDTO, FlashcardDeckDTO } from "@campusstudy/types";
+import type { ChatThreadDTO, DashboardSnapshot, FlashcardDeckDTO } from "@campusstudy/types";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -6,7 +6,6 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { ActionRow, Card, EmptyState, MetricTile, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import { mobileDashboard, type MobileDashboardSnapshot } from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, spacing, typography } from "../../lib/theme";
 
@@ -16,9 +15,9 @@ function formatPercent(value: number) {
 
 export default function MobileDashboardScreen() {
   const { token, hydrated } = useSession();
-  const dashboardQuery = useQuery<MobileDashboardSnapshot>({
+  const dashboardQuery = useQuery<DashboardSnapshot & { latestNotes?: Array<{ id: string; title: string; noteType: string; contentMarkdown?: string | null }> }>({
     queryKey: ["mobile-dashboard"],
-    queryFn: () => apiFetch<MobileDashboardSnapshot>("/dashboard/overview", { token }),
+    queryFn: () => apiFetch<DashboardSnapshot & { latestNotes?: Array<{ id: string; title: string; noteType: string; contentMarkdown?: string | null }> }>("/dashboard/overview", { token }),
     enabled: hydrated && Boolean(token)
   });
   const deckListQuery = useQuery<FlashcardDeckDTO[]>({
@@ -31,17 +30,17 @@ export default function MobileDashboardScreen() {
     queryFn: () => apiFetch<ChatThreadDTO[]>("/chat/threads", { token }),
     enabled: hydrated && Boolean(token)
   });
-  const dashboard = dashboardQuery.data ?? mobileDashboard;
-  const isDemoMode = hydrated && !token;
-  const weakestTopic = dashboard.weakTopics[0];
-  const reviewHref = `/flashcards/${deckListQuery.data?.[0]?.id ?? "demo"}`;
-  const chatHref = `/chat/${threadListQuery.data?.[0]?.id ?? "demo"}`;
+  const dashboard = dashboardQuery.data;
+  const needsSignIn = hydrated && !token;
+  const weakestTopic = dashboard?.weakTopics[0];
+  const reviewHref = deckListQuery.data?.[0]?.id ? `/flashcards/${deckListQuery.data[0].id}` : null;
+  const chatHref = threadListQuery.data?.[0]?.id ? `/chat/${threadListQuery.data[0].id}` : null;
 
   return (
     <Screen>
       <Card tone="accent" style={styles.hero}>
         <View style={styles.heroTopline}>
-          <Pill label={isDemoMode ? "Demo preview" : "Live workspace"} tone={isDemoMode ? "gold" : "tide"} />
+          <Pill label={token ? "Workspace" : "Sign in required"} tone={token ? "tide" : "gold"} />
           {dashboardQuery.isFetching ? <ActivityIndicator color={colors.tide} /> : null}
         </View>
         <Text style={typography.title}>Today's study stack</Text>
@@ -49,35 +48,37 @@ export default function MobileDashboardScreen() {
           Pick the next useful action before class: review due cards, patch a weak topic, or skim the latest notes.
         </Text>
         <View style={styles.heroActions}>
-          <Link href={reviewHref as any} asChild>
+          {reviewHref ? <Link href={reviewHref as any} asChild>
             <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
               <Text style={styles.primaryButtonText}>Start review</Text>
             </Pressable>
-          </Link>
-          <Link href={chatHref as any} asChild>
+          </Link> : null}
+          {chatHref ? <Link href={chatHref as any} asChild>
             <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
               <Text style={styles.secondaryButtonText}>Ask sources</Text>
             </Pressable>
-          </Link>
+          </Link> : null}
         </View>
       </Card>
 
-      {isDemoMode ? (
+      {needsSignIn ? (
         <Card tone="warning">
-          <Text style={styles.noticeTitle}>Demo data is showing</Text>
-          <Text style={styles.noticeCopy}>Sign in to load your real dashboard, due cards, notes, and uploads.</Text>
+          <Text style={styles.noticeTitle}>Sign in to load your workspace</Text>
+          <Text style={styles.noticeCopy}>Dashboard metrics, due cards, notes, uploads, and chat history are account-scoped.</Text>
         </Card>
       ) : null}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.metricRail}>
-        <MetricTile label="Streak" value={`${dashboard.streakDays}d`} helper="Protect the rhythm." tone="gold" />
-        <MetricTile label="Due cards" value={`${dashboard.dueFlashcards}`} helper="Best mobile sprint." />
-        <MetricTile label="Quiz avg" value={formatPercent(dashboard.recentQuizAverage)} helper="Recent attempts." tone="ember" />
-      </ScrollView>
+      {dashboard ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.metricRail}>
+          <MetricTile label="Streak" value={`${dashboard.streakDays}d`} helper="Protect the rhythm." tone="gold" />
+          <MetricTile label="Due cards" value={`${dashboard.dueFlashcards}`} helper="Best mobile sprint." />
+          <MetricTile label="Quiz avg" value={formatPercent(dashboard.recentQuizAverage)} helper="Recent attempts." tone="ember" />
+        </ScrollView>
+      ) : null}
 
       <View style={styles.section}>
         <SectionHeader eyebrow="Revision Radar" title="Weak topics" action={weakestTopic ? formatPercent(weakestTopic.mastery) : undefined} />
-        {dashboard.weakTopics.length ? (
+        {dashboard?.weakTopics.length ? (
           <View style={styles.stack}>
             {dashboard.weakTopics.map((item, index) => (
               <Card key={item.topic} style={styles.topicCard}>
@@ -102,7 +103,7 @@ export default function MobileDashboardScreen() {
       <View style={styles.section}>
         <SectionHeader eyebrow="Generated Notes" title="Latest study outputs" />
         <View style={styles.stack}>
-          {dashboard.latestNotes.map((note) => (
+          {(dashboard?.latestNotes ?? []).map((note) => (
             <ActionRow
               key={note.id}
               title={note.title}
@@ -115,7 +116,7 @@ export default function MobileDashboardScreen() {
       <View style={styles.section}>
         <SectionHeader eyebrow="Processing" title="Recent uploads" />
         <View style={styles.stack}>
-          {dashboard.recentUploads.map((upload) => (
+          {(dashboard?.recentUploads ?? []).map((upload) => (
             <Card key={upload.id} style={styles.uploadCard}>
               <View style={styles.topicHeader}>
                 <View style={styles.uploadText}>
@@ -126,6 +127,9 @@ export default function MobileDashboardScreen() {
               </View>
             </Card>
           ))}
+          {dashboard && !dashboard.recentUploads.length ? (
+            <EmptyState title="No uploads yet" description="Upload a lecture file on web to start the study pipeline." />
+          ) : null}
         </View>
       </View>
     </Screen>

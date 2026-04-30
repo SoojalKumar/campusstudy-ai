@@ -6,7 +6,6 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { Card, EmptyState, Pill, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import { mobileFlashcardDeck, mobileQuizSet } from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, spacing, typography } from "../../lib/theme";
 
@@ -47,18 +46,18 @@ export default function StudyTabScreen() {
   const firstDeck = deckListQuery.data?.[0];
   const firstQuiz = quizListQuery.data?.[0];
   const recentThread = threadListQuery.data?.[0];
-  const displayDeck = firstDeck ?? (!isLive ? mobileFlashcardDeck : null);
-  const displayQuiz = firstQuiz ?? (!isLive ? mobileQuizSet : null);
-  const deckHref = `/flashcards/${firstDeck?.id ?? mobileFlashcardDeck.id}`;
-  const quizHref = `/quizzes/${firstQuiz?.id ?? mobileQuizSet.id}`;
-  const chatHref = `/chat/${recentThread?.id ?? "demo"}`;
+  const displayDeck = firstDeck ?? null;
+  const displayQuiz = firstQuiz ?? null;
+  const deckHref = firstDeck ? `/flashcards/${firstDeck.id}` : null;
+  const quizHref = firstQuiz ? `/quizzes/${firstQuiz.id}` : null;
+  const chatHref = recentThread ? `/chat/${recentThread.id}` : null;
   const isLoading = deckListQuery.isFetching || quizListQuery.isFetching || threadListQuery.isFetching;
 
   return (
     <Screen>
       <Card tone="accent" style={styles.hero}>
         <View style={styles.heroTopline}>
-          <Pill label={isLive ? "Live API" : "Offline preview"} tone={isLive ? "tide" : "gold"} />
+          <Pill label={isLive ? "Workspace" : "Sign in required"} tone={isLive ? "tide" : "gold"} />
           {isLoading ? <ActivityIndicator color={colors.tide} /> : null}
         </View>
         <Text style={typography.title}>Pocket study cockpit</Text>
@@ -69,31 +68,31 @@ export default function StudyTabScreen() {
 
       {!isLive ? (
         <Card tone="warning">
-          <Text style={styles.noticeTitle}>Demo shortcuts are showing</Text>
-          <Text style={styles.noticeCopy}>Sign in as Maya to load seeded decks, quizzes, and persisted chat threads.</Text>
+          <Text style={styles.noticeTitle}>Sign in to study on mobile</Text>
+          <Text style={styles.noticeCopy}>Your decks, quizzes, and persisted chat threads sync from the API.</Text>
           <Link href="/login" asChild>
             <Pressable style={({ pressed }) => [styles.inlineButton, pressed && styles.pressed]}>
-              <Text style={styles.inlineButtonText}>Sign in to live pilot</Text>
+              <Text style={styles.inlineButtonText}>Sign in</Text>
             </Pressable>
           </Link>
         </Card>
       ) : null}
 
       <View style={styles.modeGrid}>
-        <Link href={deckHref as any} asChild>
+        {deckHref ? <Link href={deckHref as any} asChild>
           <Pressable style={({ pressed }) => [styles.modeCard, pressed && styles.pressed]}>
             <Text style={styles.modeEyebrow}>Spaced repetition</Text>
             <Text style={styles.modeTitle}>Flashcards</Text>
-            <Text style={styles.modeCopy}>{firstDeck?.title ?? mobileFlashcardDeck.title}</Text>
+            <Text style={styles.modeCopy}>{firstDeck?.title}</Text>
           </Pressable>
-        </Link>
-        <Link href={quizHref as any} asChild>
+        </Link> : null}
+        {quizHref ? <Link href={quizHref as any} asChild>
           <Pressable style={({ pressed }) => [styles.modeCard, pressed && styles.pressed]}>
             <Text style={styles.modeEyebrow}>Active recall</Text>
             <Text style={styles.modeTitle}>Quiz player</Text>
-            <Text style={styles.modeCopy}>{firstQuiz?.title ?? mobileQuizSet.title}</Text>
+            <Text style={styles.modeCopy}>{firstQuiz?.title}</Text>
           </Pressable>
-        </Link>
+        </Link> : null}
         {recentThread ? (
           <Link href={chatHref as any} asChild>
             <Pressable style={({ pressed }) => [styles.modeCard, pressed && styles.pressed]}>
@@ -110,7 +109,6 @@ export default function StudyTabScreen() {
                 createThreadMutation.mutate();
                 return;
               }
-              router.push("/chat/demo" as any);
             }}
             style={({ pressed }) => [
               styles.modeCard,
@@ -122,7 +120,7 @@ export default function StudyTabScreen() {
             <Text style={styles.modeEyebrow}>RAG workspace</Text>
             <Text style={styles.modeTitle}>{createThreadMutation.isPending ? "Starting..." : "Chat with sources"}</Text>
             <Text style={styles.modeCopy}>
-              {token ? "Create a strict-source workspace thread." : "Preview the cited chat experience."}
+              {token ? "Create a strict-source workspace thread." : "Sign in to create a cited chat thread."}
             </Text>
           </Pressable>
         )}
@@ -132,13 +130,13 @@ export default function StudyTabScreen() {
       <View style={styles.assetStack}>
         {displayDeck || displayQuiz ? (
           <>
-            {displayDeck ? <AssetRow label={isLive ? "Deck" : "Demo deck"} title={displayDeck.title} meta={displayDeck.sourceScope} href={`/flashcards/${displayDeck.id}`} /> : null}
+            {displayDeck ? <AssetRow label="Deck" title={displayDeck.title} meta={displayDeck.sourceScope} href={`/flashcards/${displayDeck.id}`} /> : null}
             {displayQuiz ? (
-              <AssetRow label={isLive ? "Quiz" : "Demo quiz"} title={displayQuiz.title} meta={`${displayQuiz.questionCount} questions`} href={`/quizzes/${displayQuiz.id}`} />
+              <AssetRow label="Quiz" title={displayQuiz.title} meta={`${displayQuiz.questionCount} questions`} href={`/quizzes/${displayQuiz.id}`} />
             ) : null}
           </>
         ) : (
-          <EmptyState title="No live study packs yet" description="Seed or generate flashcards and quizzes, then they will appear here." />
+          <EmptyState title="No study packs yet" description="Generate flashcards and quizzes from uploaded course material to fill this queue." />
         )}
       </View>
     </Screen>

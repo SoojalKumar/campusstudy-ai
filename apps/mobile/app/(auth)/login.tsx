@@ -8,8 +8,8 @@ import { useSession } from "../../lib/session";
 
 export default function LoginScreen() {
   const { setToken } = useSession();
-  const [email, setEmail] = useState("maya@student.pacific.edu");
-  const [password, setPassword] = useState("StudentPass123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function loginWithCredentials(nextEmail = email, nextPassword = password) {
@@ -70,24 +70,6 @@ export default function LoginScreen() {
       >
         <Text style={{ color: "#081019", fontWeight: "700", textAlign: "center" }}>Sign In</Text>
       </Pressable>
-      <View style={{ gap: 10, marginTop: 4 }}>
-        <Pressable
-          onPress={() => loginWithCredentials("maya@student.pacific.edu", "StudentPass123!")}
-          style={{ borderColor: "rgba(115,201,199,0.36)", borderRadius: 18, borderWidth: 1, padding: 14 }}
-        >
-          <Text style={{ color: "#73c9c7", fontWeight: "800", textAlign: "center" }}>
-            Enter as Maya, CS student
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => loginWithCredentials("admin@pacific.edu", "AdminPass123!")}
-          style={{ borderColor: "rgba(246,215,139,0.34)", borderRadius: 18, borderWidth: 1, padding: 14 }}
-        >
-          <Text style={{ color: "#f6d78b", fontWeight: "800", textAlign: "center" }}>
-            Enter as Campus Admin
-          </Text>
-        </Pressable>
-      </View>
     </Screen>
   );
 }

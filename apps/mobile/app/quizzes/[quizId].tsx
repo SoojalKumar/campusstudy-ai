@@ -7,7 +7,6 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Card, EmptyState, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import { mobileQuizSet } from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, radius, spacing, typography } from "../../lib/theme";
 
@@ -22,49 +21,22 @@ function isCorrect(question: QuizQuestionDTO, answer?: string) {
   return answer.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
 }
 
-function scoreLocalAttempt(quiz: QuizSetDTO, answers: AnswerMap): QuizAttemptDTO {
-  const answerRows = quiz.questions.map((question) => {
-    const submittedAnswer = answers[question.id] ?? "";
-    const correct = isCorrect(question, submittedAnswer) === true;
-    return {
-      correctAnswer: question.correctAnswer ?? null,
-      feedback: question.explanation,
-      id: `${question.id}-answer`,
-      isCorrect: correct,
-      quizQuestionId: question.id,
-      scoreAwarded: correct ? 1 : 0,
-      submittedAnswer
-    };
-  });
-  const correctCount = answerRows.filter((answer) => answer.isCorrect).length;
-  return {
-    answers: answerRows,
-    completedAt: new Date().toISOString(),
-    correctCount,
-    id: "local-attempt",
-    quizSetId: quiz.id,
-    score: correctCount / Math.max(1, quiz.questions.length),
-    totalQuestions: quiz.questions.length
-  };
-}
-
 export default function QuizScreen() {
   const params = useLocalSearchParams<{ quizId?: string | string[] }>();
   const routeQuizId = Array.isArray(params.quizId) ? params.quizId[0] : params.quizId;
-  const quizId = routeQuizId ?? "demo";
+  const quizId = routeQuizId;
   const { token, hydrated } = useSession();
   const [activeIndex, setActiveIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [startedAt] = useState(() => Date.now());
-  const [localAttempt, setLocalAttempt] = useState<QuizAttemptDTO | null>(null);
 
   const quizQuery = useQuery<QuizSetDTO>({
     queryKey: ["quiz-set", quizId],
     queryFn: () => apiFetch<QuizSetDTO>(`/quizzes/sets/${quizId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(quizId)
   });
 
-  const quiz = quizQuery.data ?? mobileQuizSet;
+  const quiz = quizQuery.data;
 
   const submitMutation = useMutation({
     mutationFn: () =>
@@ -75,21 +47,21 @@ export default function QuizScreen() {
             submittedAnswer
           })),
           durationSeconds: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-          quizSetId: quiz.id
+          quizSetId: quiz?.id
         }),
         method: "POST",
         token
       })
   });
 
-  const attempt = submitMutation.data ?? localAttempt;
-  const activeQuestion = quiz.questions[activeIndex] ?? quiz.questions[0];
+  const attempt = submitMutation.data;
+  const activeQuestion = quiz?.questions[activeIndex] ?? quiz?.questions[0];
   const selectedAnswer = activeQuestion ? answers[activeQuestion.id] : undefined;
   const activeOptions =
     activeQuestion?.options ?? (activeQuestion && questionType(activeQuestion) === "true_false" ? ["True", "False"] : []);
   const answeredCount = Object.keys(answers).length;
-  const progress = quiz.questions.length ? answeredCount / quiz.questions.length : 1;
-  const canSubmit = answeredCount === quiz.questions.length && !attempt;
+  const progress = quiz?.questions.length ? answeredCount / quiz.questions.length : 0;
+  const canSubmit = Boolean(token && quiz) && answeredCount === (quiz?.questions.length ?? 0) && !attempt;
 
   const chooseAnswer = (question: QuizQuestionDTO, answer: string) => {
     if (attempt) return;
@@ -98,19 +70,32 @@ export default function QuizScreen() {
 
   const finishQuiz = () => {
     if (!canSubmit) return;
-    if (token) {
-      submitMutation.mutate();
-      return;
-    }
-    setLocalAttempt(scoreLocalAttempt(quiz, answers));
+    submitMutation.mutate();
   };
 
   const resetQuiz = () => {
     setAnswers({});
     setActiveIndex(0);
-    setLocalAttempt(null);
     submitMutation.reset();
   };
+
+  if (!quiz && hydrated) {
+    return (
+      <Screen>
+        <Card tone="warning">
+          <Text style={styles.noticeText}>{token ? "Quiz not found" : "Sign in to take quizzes"}</Text>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <Screen>
+        <Card tone="accent"><Text style={styles.noticeText}>Loading quiz...</Text></Card>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -122,15 +107,9 @@ export default function QuizScreen() {
         <Pill label={quiz.difficulty} tone="tide" />
       </View>
 
-      {!token && hydrated ? (
-        <Card tone="warning" style={styles.notice}>
-          <Text style={styles.noticeText}>Demo quiz is showing. Sign in to save attempts and topic mastery.</Text>
-        </Card>
-      ) : null}
-
       {quizQuery.isError ? (
         <Card tone="warning" style={styles.notice}>
-          <Text style={styles.noticeText}>Could not load the live quiz, so the local sprint is ready.</Text>
+          <Text style={styles.noticeText}>Could not load this quiz. Open a quiz from your study tab and try again.</Text>
         </Card>
       ) : null}
 

@@ -5,32 +5,37 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { ActionRow, Card, EmptyState, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import {
-  mobileCourseDetails,
-  mobileCourses,
-  mobileMaterialsByCourse,
-  mobileNotesByCourse,
-  type MobileCourseDetail,
-  type MobileMaterial,
-  type MobileNote
-} from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, spacing, typography } from "../../lib/theme";
 
-function fallbackCourse(courseId: string): MobileCourseDetail {
-  return (
-    mobileCourseDetails[courseId] ?? {
-      id: courseId,
-      code: "COURSE",
-      title: `Course ${courseId}`,
-      departmentName: "Live course",
-      description: "Live course details appear here after sign-in.",
-      materialCount: 0,
-      topicCount: 0,
-      topics: []
-    }
-  );
-}
+type MobileCourseDetail = {
+  id: string;
+  code: string;
+  title: string;
+  departmentName: string;
+  description?: string | null;
+  materialCount: number;
+  topicCount: number;
+  term?: string | null;
+  year?: number | null;
+  topics: Array<{ id: string; title: string; description?: string | null }>;
+};
+
+type MobileMaterial = {
+  id: string;
+  title: string;
+  fileType: string;
+  sourceKind: string;
+  processingStage: string;
+  processingStatus: "completed" | "failed" | string;
+};
+
+type MobileNote = {
+  id: string;
+  title: string;
+  noteType: string;
+  contentMarkdown: string;
+};
 
 function statusTone(status: MobileMaterial["processingStatus"]) {
   if (status === "completed") return "tide";
@@ -40,28 +45,47 @@ function statusTone(status: MobileMaterial["processingStatus"]) {
 
 export default function CourseDetailScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
-  const resolvedCourseId = courseId ?? "c1";
+  const resolvedCourseId = courseId;
   const { token, hydrated } = useSession();
   const courseQuery = useQuery<MobileCourseDetail>({
     queryKey: ["mobile-course", resolvedCourseId],
     queryFn: () => apiFetch<MobileCourseDetail>(`/courses/${resolvedCourseId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(resolvedCourseId)
   });
   const materialsQuery = useQuery<MobileMaterial[]>({
     queryKey: ["mobile-materials", resolvedCourseId],
     queryFn: () => apiFetch<MobileMaterial[]>(`/materials?course_id=${resolvedCourseId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(resolvedCourseId)
   });
   const notesQuery = useQuery<MobileNote[]>({
     queryKey: ["mobile-notes", resolvedCourseId],
     queryFn: () => apiFetch<MobileNote[]>(`/notes/by-course/${resolvedCourseId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(resolvedCourseId)
   });
-  const course = courseQuery.data ?? fallbackCourse(resolvedCourseId);
-  const materials = materialsQuery.data ?? mobileMaterialsByCourse[resolvedCourseId] ?? [];
-  const notes = notesQuery.data ?? mobileNotesByCourse[resolvedCourseId] ?? [];
+  const course = courseQuery.data;
+  const materials = materialsQuery.data ?? [];
+  const notes = notesQuery.data ?? [];
   const completion = Math.max(0.12, Math.min(1, materials.filter((item) => item.processingStatus === "completed").length / Math.max(1, materials.length)));
   const isLoading = courseQuery.isFetching || materialsQuery.isFetching || notesQuery.isFetching;
+
+  if (!course && hydrated) {
+    return (
+      <Screen>
+        <Card tone="warning">
+          <Text style={styles.warningTitle}>{token ? "Course not found" : "Sign in to view this course"}</Text>
+          <Text style={styles.warningCopy}>Course workspaces are scoped to your university account and enrollments.</Text>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (!course) {
+    return (
+      <Screen>
+        <Card tone="accent"><Text style={styles.warningCopy}>Loading course workspace...</Text></Card>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -241,6 +265,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     textTransform: "uppercase"
+  },
+  warningTitle: {
+    color: colors.ember,
+    fontSize: 15,
+    fontWeight: "900"
+  },
+  warningCopy: {
+    color: colors.muted,
+    lineHeight: 20,
+    marginTop: 6
   },
   pressed: {
     opacity: 0.74,

@@ -6,7 +6,6 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { Card, EmptyState, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import { mobileCourses } from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, spacing, typography } from "../../lib/theme";
 
@@ -51,14 +50,14 @@ export default function CoursesScreen() {
     queryFn: () => apiFetch<CourseSummary[]>("/courses", { token }),
     enabled: hydrated && Boolean(token)
   });
-  const courses = coursesQuery.data ?? mobileCourses;
-  const isDemoMode = hydrated && !token;
+  const courses = coursesQuery.data ?? [];
+  const needsSignIn = hydrated && !token;
 
   return (
     <Screen>
       <Card tone="accent" style={styles.hero}>
         <View style={styles.heroTopline}>
-          <Pill label={isDemoMode ? "Demo semester" : "Live courses"} tone={isDemoMode ? "gold" : "tide"} />
+          <Pill label={token ? "Courses" : "Sign in required"} tone={token ? "tide" : "gold"} />
           {coursesQuery.isFetching ? <ActivityIndicator color={colors.tide} /> : null}
         </View>
         <Text style={typography.title}>Course command center</Text>
@@ -71,6 +70,12 @@ export default function CoursesScreen() {
         <Card tone="warning">
           <Text style={styles.warningTitle}>Could not load live courses</Text>
           <Text style={styles.warningCopy}>{(coursesQuery.error as Error).message}</Text>
+        </Card>
+      ) : null}
+      {needsSignIn ? (
+        <Card tone="warning">
+          <Text style={styles.warningTitle}>Sign in to see your enrolled courses</Text>
+          <Text style={styles.warningCopy}>Course materials, topics, and study packs are scoped to your student account.</Text>
         </Card>
       ) : null}
 

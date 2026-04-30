@@ -7,7 +7,6 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, EmptyState, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import { mobileFlashcardDeck } from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, radius, spacing, typography } from "../../lib/theme";
 
@@ -37,7 +36,7 @@ function formatDue(dueAt?: string | null) {
 export default function FlashcardsScreen() {
   const params = useLocalSearchParams<{ deckId?: string | string[] }>();
   const routeDeckId = Array.isArray(params.deckId) ? params.deckId[0] : params.deckId;
-  const deckId = routeDeckId ?? "demo";
+  const deckId = routeDeckId;
   const { token, hydrated } = useSession();
   const queryClient = useQueryClient();
   const [revealed, setRevealed] = useState(false);
@@ -47,7 +46,7 @@ export default function FlashcardsScreen() {
   const deckQuery = useQuery<FlashcardDeckDTO>({
     queryKey: ["flashcard-deck", deckId],
     queryFn: () => apiFetch<FlashcardDeckDTO>(`/flashcards/decks/${deckId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(deckId)
   });
 
   const reviewMutation = useMutation({
@@ -69,25 +68,33 @@ export default function FlashcardsScreen() {
     }
   });
 
-  const deck = deckQuery.data ?? mobileFlashcardDeck;
-  const dueCards = deck.flashcards.filter((card) => isDue(card) && !reviewedIds.has(card.id));
+  const deck = deckQuery.data;
+  const dueCards = deck?.flashcards.filter((card) => isDue(card) && !reviewedIds.has(card.id)) ?? [];
   const activeCard = dueCards[activeIndex] ?? dueCards[0];
-  const completedCount = deck.flashcards.length - dueCards.length;
-  const progress = deck.flashcards.length ? completedCount / deck.flashcards.length : 1;
+  const completedCount = deck ? deck.flashcards.length - dueCards.length : 0;
+  const progress = deck?.flashcards.length ? completedCount / deck.flashcards.length : 0;
 
   const reviewCard = (card: FlashcardDTO, rating: number) => {
-    if (token) {
-      reviewMutation.mutate({ flashcardId: card.id, rating });
-      return;
-    }
-    setReviewedIds((current) => {
-      const next = new Set(current);
-      next.add(card.id);
-      return next;
-    });
-    setActiveIndex(0);
-    setRevealed(false);
+    reviewMutation.mutate({ flashcardId: card.id, rating });
   };
+
+  if (!deck && hydrated) {
+    return (
+      <Screen>
+        <Card tone="warning">
+          <Text style={styles.noticeText}>{token ? "Deck not found" : "Sign in to review flashcards"}</Text>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (!deck) {
+    return (
+      <Screen>
+        <Card tone="accent"><Text style={styles.noticeText}>Loading flashcards...</Text></Card>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -99,15 +106,9 @@ export default function FlashcardsScreen() {
         <Pill label={`${dueCards.length} due`} tone={dueCards.length ? "gold" : "tide"} />
       </View>
 
-      {!token && hydrated ? (
-        <Card tone="warning" style={styles.notice}>
-          <Text style={styles.noticeText}>Demo deck is showing. Sign in to save reviews and sync due dates.</Text>
-        </Card>
-      ) : null}
-
       {deckQuery.isError ? (
         <Card tone="warning" style={styles.notice}>
-          <Text style={styles.noticeText}>Could not load the live deck, so the local review sprint is ready.</Text>
+          <Text style={styles.noticeText}>Could not load this deck. Open a deck from your study tab and try again.</Text>
         </Card>
       ) : null}
 
@@ -152,7 +153,7 @@ export default function FlashcardsScreen() {
             <View style={styles.actionGrid}>
               {reviewActions.map((action) => (
                 <Pressable
-                  disabled={reviewMutation.isPending}
+                  disabled={!token || reviewMutation.isPending}
                   key={action.label}
                   onPress={() => reviewCard(activeCard, action.rating)}
                   style={({ pressed }) => [

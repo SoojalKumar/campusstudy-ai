@@ -6,12 +6,6 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { ActionRow, Card, EmptyState, Pill, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
-import {
-  mobileMaterialsByCourse,
-  mobileNotesByCourse,
-  type MobileMaterial,
-  type MobileNote
-} from "../../lib/demo-data";
 import { useSession } from "../../lib/session";
 import { colors, spacing, typography } from "../../lib/theme";
 
@@ -22,23 +16,24 @@ type TranscriptSegment = {
   text: string;
 };
 
-const demoMaterials = Object.values(mobileMaterialsByCourse).flat();
-const demoNotes = Object.values(mobileNotesByCourse).flat();
+type MobileMaterial = {
+  id: string;
+  title: string;
+  fileName: string;
+  fileType: string;
+  sourceKind: string;
+  processingStage: string;
+  processingStatus: string;
+  extractedText?: string | null;
+  transcriptText?: string | null;
+};
 
-function fallbackMaterial(materialId: string): MobileMaterial {
-  return (
-    demoMaterials.find((material) => material.id === materialId) ?? {
-      id: materialId,
-      title: `Material ${materialId}`,
-      fileName: "source-material.pdf",
-      fileType: "pdf",
-      sourceKind: "document",
-      processingStage: "completed",
-      processingStatus: "completed",
-      extractedText: "Source preview appears here after live material data loads."
-    }
-  );
-}
+type MobileNote = {
+  id: string;
+  title: string;
+  noteType: string;
+  contentMarkdown: string;
+};
 
 function formatSeconds(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -48,30 +43,30 @@ function formatSeconds(totalSeconds: number) {
 
 export default function MaterialDetailScreen() {
   const { materialId } = useLocalSearchParams<{ materialId: string }>();
-  const resolvedMaterialId = materialId ?? "m1";
+  const resolvedMaterialId = materialId;
   const { token, hydrated } = useSession();
   const queryClient = useQueryClient();
   const materialQuery = useQuery<MobileMaterial>({
     queryKey: ["mobile-material", resolvedMaterialId],
     queryFn: () => apiFetch<MobileMaterial>(`/materials/${resolvedMaterialId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(resolvedMaterialId)
   });
   const notesQuery = useQuery<MobileNote[]>({
     queryKey: ["mobile-material-notes", resolvedMaterialId],
     queryFn: () => apiFetch<MobileNote[]>(`/notes/by-material/${resolvedMaterialId}`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(resolvedMaterialId)
   });
   const transcriptQuery = useQuery<TranscriptSegment[]>({
     queryKey: ["mobile-material-transcript", resolvedMaterialId],
     queryFn: () => apiFetch<TranscriptSegment[]>(`/transcripts/materials/${resolvedMaterialId}/transcript`, { token }),
-    enabled: hydrated && Boolean(token)
+    enabled: hydrated && Boolean(token) && Boolean(resolvedMaterialId)
   });
-  const material = materialQuery.data ?? fallbackMaterial(resolvedMaterialId);
-  const notes = notesQuery.data ?? demoNotes.filter((note) => note.id === "n1" || note.id === "n2");
+  const material = materialQuery.data;
+  const notes = notesQuery.data ?? [];
   const transcript = transcriptQuery.data ?? [];
-  const sourcePreview = material.transcriptText ?? material.extractedText;
+  const sourcePreview = material?.transcriptText ?? material?.extractedText;
   const isLoading = materialQuery.isFetching || notesQuery.isFetching || transcriptQuery.isFetching;
-  const canGenerate = hydrated && Boolean(token) && material.processingStatus === "completed";
+  const canGenerate = hydrated && Boolean(token) && material?.processingStatus === "completed";
   const noteMutation = useMutation({
     mutationFn: () =>
       apiFetch<MobileNote>("/notes/generate", {
@@ -81,6 +76,25 @@ export default function MaterialDetailScreen() {
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["mobile-material-notes", resolvedMaterialId] })
   });
+
+  if (!material && hydrated) {
+    return (
+      <Screen>
+        <Card tone="warning">
+          <Text style={styles.errorText}>{token ? "Material not found" : "Sign in to view this material"}</Text>
+          <Text style={styles.generateHint}>Materials are private to the workspace that uploaded them.</Text>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (!material) {
+    return (
+      <Screen>
+        <Card tone="accent"><Text style={styles.generateHint}>Loading material...</Text></Card>
+      </Screen>
+    );
+  }
   const deckMutation = useMutation({
     mutationFn: () =>
       apiFetch<FlashcardDeckDTO>("/flashcards/generate", {

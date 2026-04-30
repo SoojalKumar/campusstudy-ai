@@ -10,39 +10,6 @@ import { apiFetch } from "../../lib/api";
 import { useSession } from "../../lib/session";
 import { colors, radius, spacing, typography } from "../../lib/theme";
 
-const demoThread: ChatThreadDTO = {
-  answerStyle: "exam-oriented",
-  createdAt: new Date().toISOString(),
-  id: "demo",
-  messages: [
-    {
-      citations: [],
-      content: "How should I revise BFS vs DFS tonight?",
-      id: "demo-user-message",
-      role: "user",
-      threadId: "demo"
-    },
-    {
-      citations: [
-        {
-          chunkId: "demo-chunk",
-          pageNumber: 1,
-          snippet: "Breadth-first search visits nodes level by level and uses a queue.",
-          sourceLabel: "Graph Traversal Notes, Page 1"
-        }
-      ],
-      content: "Focus on traversal order, shortest path guarantees, and queue vs stack behavior. In exam mode, practice tracing both algorithms on the same graph.",
-      id: "demo-assistant-message",
-      role: "assistant",
-      threadId: "demo"
-    }
-  ],
-  scopeType: "workspace",
-  strictMode: true,
-  title: "Demo cited chat",
-  userId: "demo-user"
-};
-
 const answerStyles: ChatAnswerStyle[] = ["exam-oriented", "concise", "beginner", "detailed", "bullet-summary"];
 
 function citationLocation(citation: ChatCitation) {
@@ -55,7 +22,7 @@ function citationLocation(citation: ChatCitation) {
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ threadId?: string | string[] }>();
   const routeThreadId = Array.isArray(params.threadId) ? params.threadId[0] : params.threadId;
-  const threadId = routeThreadId ?? "demo";
+  const threadId = routeThreadId;
   const { token, hydrated } = useSession();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
@@ -65,7 +32,7 @@ export default function ChatScreen() {
   const threadQuery = useQuery<ChatThreadDTO>({
     queryKey: ["mobile-chat-thread", threadId],
     queryFn: () => apiFetch<ChatThreadDTO>(`/chat/threads/${threadId}`, { token }),
-    enabled: hydrated && Boolean(token) && threadId !== "demo"
+    enabled: hydrated && Boolean(token) && Boolean(threadId)
   });
 
   const createThreadMutation = useMutation({
@@ -100,41 +67,40 @@ export default function ChatScreen() {
     }
   });
 
-  const thread = threadQuery.data ?? demoThread;
-  const assistantMessages = thread.messages.filter((item) => item.role === "assistant");
+  const thread = threadQuery.data;
+  const assistantMessages = thread?.messages.filter((item) => item.role === "assistant") ?? [];
   const citations = assistantMessages.flatMap((item) => item.citations);
-  const isDemo = threadId === "demo" || !token;
-  const canSend = Boolean(token) && threadId !== "demo" && message.trim().length > 0 && !sendMessageMutation.isPending;
+  const canSend = Boolean(token && threadId && thread) && message.trim().length > 0 && !sendMessageMutation.isPending;
 
   return (
     <Screen>
       <Card tone="accent" style={styles.hero}>
         <View style={styles.heroTopline}>
-          <Pill label={isDemo ? "Demo citations" : "Live RAG"} tone={isDemo ? "gold" : "tide"} />
+          <Pill label={thread ? "Source chat" : "Start chat"} tone={thread ? "tide" : "gold"} />
           {threadQuery.isFetching ? <ActivityIndicator color={colors.tide} /> : null}
         </View>
-        <Text style={typography.title}>{thread.title}</Text>
+        <Text style={typography.title}>{thread?.title ?? "Source-grounded chat"}</Text>
         <Text style={styles.heroCopy}>
-          {thread.strictMode ? "Strict-source mode is on: answers should cite uploaded material or refuse gracefully." : "Open study mode with source citations when available."}
+          {thread?.strictMode ?? strictMode ? "Strict-source mode is on: answers should cite uploaded material or refuse gracefully." : "Open study mode with source citations when available."}
         </Text>
       </Card>
 
       {!token && hydrated ? (
         <Card tone="warning">
-          <Text style={styles.noticeTitle}>Static preview is showing</Text>
+          <Text style={styles.noticeTitle}>Sign in to create chat threads</Text>
           <Text style={styles.noticeCopy}>Sign in to create persisted threads, ask follow-ups, and save citations.</Text>
           <Link href="/login" asChild>
             <Pressable style={({ pressed }) => [styles.inlineButton, pressed && styles.pressed]}>
-              <Text style={styles.inlineButtonText}>Sign in to live pilot</Text>
+              <Text style={styles.inlineButtonText}>Sign in</Text>
             </Pressable>
           </Link>
         </Card>
       ) : null}
 
-      {threadId === "demo" && token ? (
+      {!thread && token ? (
         <Card tone="strong" style={styles.createCard}>
           <Text style={styles.cardTitle}>Start a live workspace thread</Text>
-          <Text style={styles.cardCopy}>Choose an answer style, keep strict citations on for exam prep, then start asking against seeded materials.</Text>
+          <Text style={styles.cardCopy}>Choose an answer style, keep strict citations on for exam prep, then ask against your uploaded materials.</Text>
           <View style={styles.chipRow}>
             {answerStyles.map((style) => (
               <Pressable
@@ -165,13 +131,13 @@ export default function ChatScreen() {
       {threadQuery.isError ? (
         <Card tone="warning">
           <Text style={styles.noticeTitle}>Could not load this thread</Text>
-          <Text style={styles.noticeCopy}>The offline cited preview is still available while the API catches up.</Text>
+          <Text style={styles.noticeCopy}>Open a recent thread from Study or create a new workspace thread.</Text>
         </Card>
       ) : null}
 
-      <SectionHeader eyebrow="Conversation" title="Source-grounded thread" action={`${thread.messages.length} turns`} />
+      <SectionHeader eyebrow="Conversation" title="Source-grounded thread" action={thread ? `${thread.messages.length} turns` : undefined} />
       <View style={styles.messageStack}>
-        {thread.messages.length ? (
+        {thread?.messages.length ? (
           thread.messages.map((item) => (
             <View key={item.id} style={[styles.messageBubble, item.role === "assistant" ? styles.assistantBubble : styles.userBubble]}>
               <Text style={styles.messageRole}>{item.role === "assistant" ? "CampusStudy AI" : "You"}</Text>
@@ -192,10 +158,10 @@ export default function ChatScreen() {
 
       <Card tone="strong" style={styles.composerCard}>
         <TextInput
-          editable={Boolean(token) && threadId !== "demo"}
+          editable={Boolean(token && threadId && thread)}
           multiline
           onChangeText={setMessage}
-          placeholder={threadId === "demo" ? "Start a live thread before sending." : "Ask about exam traps, lecture concepts, or confusing passages..."}
+          placeholder={thread ? "Ask about exam traps, lecture concepts, or confusing passages..." : "Start a thread before sending."}
           placeholderTextColor={colors.dim}
           style={styles.composerInput}
           value={message}
