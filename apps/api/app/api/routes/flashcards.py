@@ -28,29 +28,48 @@ def generate_deck(
 
 
 @router.get("/decks/{deck_id}", response_model=FlashcardDeckResponse)
-def get_deck(deck_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)) -> FlashcardDeckResponse:
-    deck = db.query(FlashcardDeck).filter(FlashcardDeck.id == deck_id, FlashcardDeck.user_id == user.id).first()
+def get_deck(
+    deck_id: str,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> FlashcardDeckResponse:
+    deck = (
+        db.query(FlashcardDeck)
+        .filter(FlashcardDeck.id == deck_id, FlashcardDeck.user_id == user.id)
+        .first()
+    )
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found.")
-    cards = db.query(Flashcard).filter(Flashcard.deck_id == deck.id).order_by(Flashcard.order_index.asc()).all()
+    cards = (
+        db.query(Flashcard)
+        .filter(Flashcard.deck_id == deck.id)
+        .order_by(Flashcard.order_index.asc())
+        .all()
+    )
     latest_reviews = {}
     if cards:
         for review in (
             db.query(FlashcardReview)
-            .filter(FlashcardReview.user_id == user.id, FlashcardReview.flashcard_id.in_([card.id for card in cards]))
+            .filter(
+                FlashcardReview.user_id == user.id,
+                FlashcardReview.flashcard_id.in_([card.id for card in cards]),
+            )
             .order_by(FlashcardReview.reviewed_at.desc())
             .all()
         ):
             latest_reviews.setdefault(review.flashcard_id, review)
+    flashcards = []
+    for card in cards:
+        latest_review = latest_reviews.get(card.id)
+        flashcards.append(
+            FlashcardResponse(
+                **FlashcardResponse.model_validate(card).model_dump(exclude={"due_at"}),
+                due_at=latest_review.due_at if latest_review else datetime.now(UTC),
+            )
+        )
     return FlashcardDeckResponse(
         **FlashcardDeckResponse.model_validate(deck).model_dump(exclude={"flashcards"}),
-        flashcards=[
-            FlashcardResponse(
-                **FlashcardResponse.model_validate(card).model_dump(),
-                due_at=latest_reviews.get(card.id).due_at if latest_reviews.get(card.id) else datetime.now(UTC),
-            )
-            for card in cards
-        ],
+        flashcards=flashcards,
     )
 
 
