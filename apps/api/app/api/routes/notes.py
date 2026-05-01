@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db, enforce_rate_limit
@@ -16,6 +16,18 @@ def generate_note_set(
     user=Depends(get_current_user),
 ) -> NoteSet:
     return generate_notes(db, user=user, payload=payload)
+
+
+@router.get("/{note_id}", response_model=NoteSetResponse)
+def note_by_id(note_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)) -> NoteSet:
+    note = (
+        db.query(NoteSet)
+        .filter(NoteSet.id == note_id, NoteSet.user_id == user.id, NoteSet.deleted_at.is_(None))
+        .first()
+    )
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found.")
+    return note
 
 
 @router.get("/by-material/{material_id}", response_model=list[NoteSetResponse])
@@ -36,4 +48,3 @@ def notes_by_course(course_id: str, db: Session = Depends(get_db), user=Depends(
         .order_by(NoteSet.created_at.desc())
         .all()
     )
-
