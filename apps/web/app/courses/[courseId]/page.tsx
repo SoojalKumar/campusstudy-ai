@@ -1,5 +1,7 @@
 "use client";
 
+import type { NoteSetDTO } from "@campusstudy/types";
+import { formatNoteTypeLabel } from "@campusstudy/types";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -32,8 +34,13 @@ export default function CourseDetailPage() {
     queryKey: ["materials", courseId],
     path: `/materials?course_id=${courseId}`
   });
+  const notesQuery = useAuthedQuery<NoteSetDTO[]>({
+    queryKey: ["course-notes", courseId],
+    path: `/notes/by-course/${courseId}`
+  });
   const course = courseQuery.data;
   const materials = materialsQuery.data ?? [];
+  const notes = notesQuery.data ?? [];
 
   if (!course && courseQuery.hydrated) {
     return (
@@ -116,6 +123,25 @@ export default function CourseDetailPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+        <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
+          <h2 className="text-xl font-semibold text-white">Generated notes</h2>
+          <div className="mt-4 space-y-3 text-sm text-slate-300">
+            {notes.length ? (
+              notes.map((note) => (
+                <Link key={note.id} href={`/notes/${note.id}`} className="block rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/30">
+                  <p className="font-medium text-white">{note.title}</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {formatNoteTypeLabel(note.noteType)} · {note.contentMarkdown.slice(0, 120)}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-slate-400">
+                No generated notes for this course yet. Generate one from a material to start building a study library.
+              </div>
+            )}
           </div>
         </div>
       </div>

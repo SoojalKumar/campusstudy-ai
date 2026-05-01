@@ -43,6 +43,92 @@ export interface DashboardSnapshot {
   }>;
 }
 
+export interface NoteSetDTO {
+  id: string;
+  userId: string;
+  courseId?: string | null;
+  topicId?: string | null;
+  materialId?: string | null;
+  noteType: string;
+  title: string;
+  contentMarkdown: string;
+  metadataJson?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NoteSectionBlock {
+  kind: "paragraph" | "bullet" | "numbered";
+  text: string;
+}
+
+export interface NoteSection {
+  title?: string;
+  blocks: NoteSectionBlock[];
+}
+
+export function formatNoteTypeLabel(noteType: string) {
+  return noteType
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function buildNoteSections(contentMarkdown: string): NoteSection[] {
+  const sections: NoteSection[] = [];
+  let currentSection: NoteSection = { blocks: [] };
+  let paragraphBuffer: string[] = [];
+
+  const flushParagraph = () => {
+    if (!paragraphBuffer.length) return;
+    currentSection.blocks.push({
+      kind: "paragraph",
+      text: paragraphBuffer.join(" ").trim()
+    });
+    paragraphBuffer = [];
+  };
+
+  const flushSection = () => {
+    flushParagraph();
+    if (!currentSection.title && !currentSection.blocks.length) return;
+    sections.push(currentSection);
+    currentSection = { blocks: [] };
+  };
+
+  for (const rawLine of contentMarkdown.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
+
+    if (line.startsWith("#")) {
+      flushSection();
+      currentSection.title = line.replace(/^#+\s*/, "").trim();
+      continue;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      flushParagraph();
+      currentSection.blocks.push({ kind: "bullet", text: (bulletMatch[1] ?? "").trim() });
+      continue;
+    }
+
+    const numberedMatch = line.match(/^\d+\.\s+(.*)$/);
+    if (numberedMatch) {
+      flushParagraph();
+      currentSection.blocks.push({ kind: "numbered", text: (numberedMatch[1] ?? "").trim() });
+      continue;
+    }
+
+    paragraphBuffer.push(line);
+  }
+
+  flushSection();
+  return sections.length ? sections : [{ title: "Overview", blocks: [{ kind: "paragraph", text: contentMarkdown.trim() }] }];
+}
+
 export interface ChatCitation {
   chunkId: string;
   sourceLabel: string;

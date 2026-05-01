@@ -1,6 +1,7 @@
 "use client";
 
-import type { ChatThreadDTO, CourseSummary, DashboardSnapshot, FlashcardDeckDTO, QuizSetDTO } from "@campusstudy/types";
+import type { ChatThreadDTO, CourseSummary, DashboardSnapshot, FlashcardDeckDTO, NoteSetDTO, QuizSetDTO } from "@campusstudy/types";
+import { formatNoteTypeLabel } from "@campusstudy/types";
 import { EmptyState, MetricCard, SectionCard } from "@campusstudy/ui";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
@@ -12,9 +13,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
 import { useSession } from "@/lib/session";
 
-type DashboardResponse = DashboardSnapshot & {
-  latestNotes: Array<{ id: string; title: string; noteType: string }>;
-};
+type DashboardResponse = DashboardSnapshot & { latestNotes: NoteSetDTO[] };
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -180,6 +179,27 @@ export default function DashboardPage() {
               <EmptyState
                 title="No uploads yet"
                 description="Add a PDF, slide deck, doc, audio, or video file to start the processing pipeline."
+              />
+            )}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Latest Notes" eyebrow="Study Library">
+          <div className="grid gap-3">
+            {dashboard?.latestNotes.length ? dashboard.latestNotes.map((note) => (
+              <Link
+                key={note.id}
+                className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-gold/30"
+                href={`/notes/${note.id}`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{formatNoteTypeLabel(note.noteType)}</p>
+                <p className="mt-2 font-medium text-white">{note.title}</p>
+                <p className="mt-2 line-clamp-3 text-sm text-slate-400">{note.contentMarkdown}</p>
+              </Link>
+            )) : (
+              <EmptyState
+                title="No notes generated yet"
+                description="Generate a revision sheet or summary from a processed material to start your study library."
               />
             )}
           </div>

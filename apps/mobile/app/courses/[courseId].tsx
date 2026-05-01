@@ -1,5 +1,6 @@
+import { formatNoteTypeLabel } from "@campusstudy/types";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ActionRow, Card, EmptyState, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
@@ -126,7 +127,10 @@ export default function CourseDetailScreen() {
               <ActionRow
                 key={note.id}
                 title={note.title}
-                description={`${note.noteType.replace("_", " ")} · ${note.contentMarkdown.slice(0, 96)}`}
+                description={`${formatNoteTypeLabel(note.noteType)} · ${note.contentMarkdown.slice(0, 96)}`}
+                onPress={() => {
+                  router.push(`/notes/${note.id}` as any);
+                }}
               />
             ))}
           </View>

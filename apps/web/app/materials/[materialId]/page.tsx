@@ -1,6 +1,7 @@
 "use client";
 
-import type { FlashcardDeckDTO, QuizSetDTO } from "@campusstudy/types";
+import type { FlashcardDeckDTO, NoteSetDTO, QuizSetDTO } from "@campusstudy/types";
+import { formatNoteTypeLabel } from "@campusstudy/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -23,12 +24,6 @@ type MaterialResponse = {
   downloadUrl?: string | null;
   extractedText?: string | null;
   transcriptText?: string | null;
-};
-
-type NoteResponse = {
-  id: string;
-  title: string;
-  noteType: string;
 };
 
 type TranscriptSegment = {
@@ -58,13 +53,14 @@ export default function MaterialDetailPage() {
   const materialId = params.materialId;
   const { token, hydrated } = useSession();
   const queryClient = useQueryClient();
+  const [generatedNoteId, setGeneratedNoteId] = useState<string | null>(null);
   const [generatedDeckId, setGeneratedDeckId] = useState<string | null>(null);
   const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
   const materialQuery = useAuthedQuery<MaterialResponse>({
     queryKey: ["material", materialId],
     path: `/materials/${materialId}`
   });
-  const notesQuery = useAuthedQuery<NoteResponse[]>({
+  const notesQuery = useAuthedQuery<NoteSetDTO[]>({
     queryKey: ["notes", materialId],
     path: `/notes/by-material/${materialId}`
   });
@@ -83,12 +79,15 @@ export default function MaterialDetailPage() {
   const canGenerate = hydrated && Boolean(token) && material?.processingStatus === "completed";
   const noteMutation = useMutation({
     mutationFn: () =>
-      apiFetch<NoteResponse>("/notes/generate", {
+      apiFetch<NoteSetDTO>("/notes/generate", {
         body: JSON.stringify({ materialId, noteType: "revision_sheet" }),
         method: "POST",
         token
       }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["notes", materialId] })
+    onSuccess: (note) => {
+      setGeneratedNoteId(note.id);
+      void queryClient.invalidateQueries({ queryKey: ["notes", materialId] });
+    }
   });
   const deckMutation = useMutation({
     mutationFn: () =>
@@ -270,11 +269,22 @@ export default function MaterialDetailPage() {
             <h2 className="text-xl font-semibold text-white">Note outputs</h2>
             <ul className="mt-4 space-y-2 text-sm text-slate-300">
               {notes.length ? (
-                notes.map((note) => <li key={note.id}>{note.noteType} · {note.title}</li>)
+                notes.map((note) => (
+                  <li key={note.id}>
+                    <Link className="transition hover:text-tide" href={`/notes/${note.id}`}>
+                      {formatNoteTypeLabel(note.noteType)} · {note.title}
+                    </Link>
+                  </li>
+                ))
               ) : (
                 <li>No live notes found yet.</li>
               )}
             </ul>
+            {generatedNoteId ? (
+              <Link className="mt-4 block text-sm font-semibold text-white" href={`/notes/${generatedNoteId}`}>
+                Open generated note
+              </Link>
+            ) : null}
           </div>
           <div className="grid gap-3">
             {citations.length ? (

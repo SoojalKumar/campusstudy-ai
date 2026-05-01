@@ -1,6 +1,7 @@
-import type { ChatThreadDTO, DashboardSnapshot, FlashcardDeckDTO } from "@campusstudy/types";
+import type { ChatThreadDTO, DashboardSnapshot, FlashcardDeckDTO, NoteSetDTO } from "@campusstudy/types";
+import { formatNoteTypeLabel } from "@campusstudy/types";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ActionRow, Card, EmptyState, MetricTile, Pill, ProgressBar, SectionHeader } from "../../components/primitives";
@@ -15,9 +16,9 @@ function formatPercent(value: number) {
 
 export default function MobileDashboardScreen() {
   const { token, hydrated } = useSession();
-  const dashboardQuery = useQuery<DashboardSnapshot & { latestNotes?: Array<{ id: string; title: string; noteType: string; contentMarkdown?: string | null }> }>({
+  const dashboardQuery = useQuery<DashboardSnapshot & { latestNotes?: NoteSetDTO[] }>({
     queryKey: ["mobile-dashboard"],
-    queryFn: () => apiFetch<DashboardSnapshot & { latestNotes?: Array<{ id: string; title: string; noteType: string; contentMarkdown?: string | null }> }>("/dashboard/overview", { token }),
+    queryFn: () => apiFetch<DashboardSnapshot & { latestNotes?: NoteSetDTO[] }>("/dashboard/overview", { token }),
     enabled: hydrated && Boolean(token)
   });
   const deckListQuery = useQuery<FlashcardDeckDTO[]>({
@@ -107,7 +108,10 @@ export default function MobileDashboardScreen() {
             <ActionRow
               key={note.id}
               title={note.title}
-              description={`${note.noteType.replace("_", " ")} · ${note.contentMarkdown ?? "Ready for review"}`}
+              description={`${formatNoteTypeLabel(note.noteType)} · ${note.contentMarkdown ?? "Ready for review"}`}
+              onPress={() => {
+                router.push(`/notes/${note.id}` as any);
+              }}
             />
           ))}
         </View>

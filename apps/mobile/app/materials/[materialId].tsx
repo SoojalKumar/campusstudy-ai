@@ -1,4 +1,5 @@
 import type { FlashcardDeckDTO, QuizSetDTO } from "@campusstudy/types";
+import { formatNoteTypeLabel } from "@campusstudy/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
@@ -76,25 +77,6 @@ export default function MaterialDetailScreen() {
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["mobile-material-notes", resolvedMaterialId] })
   });
-
-  if (!material && hydrated) {
-    return (
-      <Screen>
-        <Card tone="warning">
-          <Text style={styles.errorText}>{token ? "Material not found" : "Sign in to view this material"}</Text>
-          <Text style={styles.generateHint}>Materials are private to the workspace that uploaded them.</Text>
-        </Card>
-      </Screen>
-    );
-  }
-
-  if (!material) {
-    return (
-      <Screen>
-        <Card tone="accent"><Text style={styles.generateHint}>Loading material...</Text></Card>
-      </Screen>
-    );
-  }
   const deckMutation = useMutation({
     mutationFn: () =>
       apiFetch<FlashcardDeckDTO>("/flashcards/generate", {
@@ -119,6 +101,25 @@ export default function MaterialDetailScreen() {
       router.push(`/quizzes/${quiz.id}` as any);
     }
   });
+
+  if (!material && hydrated) {
+    return (
+      <Screen>
+        <Card tone="warning">
+          <Text style={styles.errorText}>{token ? "Material not found" : "Sign in to view this material"}</Text>
+          <Text style={styles.generateHint}>Materials are private to the workspace that uploaded them.</Text>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (!material) {
+    return (
+      <Screen>
+        <Card tone="accent"><Text style={styles.generateHint}>Loading material...</Text></Card>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -182,7 +183,10 @@ export default function MaterialDetailScreen() {
               <ActionRow
                 key={note.id}
                 title={note.title}
-                description={`${note.noteType.replace("_", " ")} · ${note.contentMarkdown.slice(0, 96)}`}
+                description={`${formatNoteTypeLabel(note.noteType)} · ${note.contentMarkdown.slice(0, 96)}`}
+                onPress={() => {
+                  router.push(`/notes/${note.id}` as any);
+                }}
               />
             ))}
           </View>
