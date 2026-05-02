@@ -266,6 +266,12 @@ def retry_processing_job(db: Session, *, job: ProcessingJob) -> ProcessingJob:
     job.status = ProcessingStatus.PENDING
     job.stage = ProcessingStage.UPLOADED
     job.error_message = None
+    job.finished_at = None
     append_job_log(job, ProcessingStage.UPLOADED, "Job retry requested.")
+    material = db.query(Material).filter(Material.id == job.material_id).first()
+    if material:
+        material.processing_status = ProcessingStatus.PENDING
+        material.processing_stage = ProcessingStage.UPLOADED
+        material.error_message = None
     db.commit()
     return job
