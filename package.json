@@ -10,7 +10,7 @@
     "test": "turbo run test"
   },
   "devDependencies": {
+    "@next/swc-wasm-nodejs": "15.5.15",
     "turbo": "^2.0.12"
   }
 }
-
