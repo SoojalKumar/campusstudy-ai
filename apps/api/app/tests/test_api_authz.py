@@ -123,10 +123,52 @@ def test_admin_retry_processing_job_resets_state(client, db_session, seeded_data
     assert payload["status"] == "pending"
     assert payload["stage"] == "uploaded"
     assert payload["errorMessage"] is None
-    assert payload["logsJson"][-1]["message"] == "Job retry requested."
+    assert payload["logsJson"][-2]["message"] == "Job retry requested."
+    assert payload["logsJson"][-1]["message"] == "Queued background processing task."
     assert queued == [(material.id, job.id)]
 
     db_session.refresh(material)
     assert material.processing_status == ProcessingStatus.PENDING
     assert material.processing_stage == ProcessingStage.UPLOADED
     assert material.error_message is None
+
+
+def test_admin_retry_processing_job_marks_failed_when_enqueue_fails(client, db_session, seeded_data, monkeypatch):
+    class BrokenTask:
+        @staticmethod
+        def delay(material_id: str, job_id: str) -> None:
+            raise RuntimeError("Redis is unavailable")
+
+    monkeypatch.setattr("app.api.routes.processing.process_material_pipeline", BrokenTask)
+
+    material = seeded_data["material"]
+    material.processing_status = ProcessingStatus.FAILED
+    material.processing_stage = ProcessingStage.FAILED
+    material.error_message = "Extractor crashed."
+    job = ProcessingJob(
+        material_id=material.id,
+        task_name="process_material_pipeline",
+        status=ProcessingStatus.FAILED,
+        stage=ProcessingStage.FAILED,
+        attempts=1,
+        error_message="Extractor crashed.",
+        logs_json=[{"stage": "failed", "message": "Extractor crashed."}],
+    )
+    db_session.add(job)
+    db_session.commit()
+
+    response = client.post(
+        f"/api/v1/processing/jobs/{job.id}/retry",
+        headers=bearer_for(seeded_data["admin"]),
+    )
+
+    assert response.status_code == 503
+    assert "could not queue background processing" in response.json()["detail"]
+    db_session.refresh(material)
+    db_session.refresh(job)
+    assert material.processing_status == ProcessingStatus.FAILED
+    assert material.processing_stage == ProcessingStage.FAILED
+    assert "could not queue background processing" in material.error_message
+    assert job.status == ProcessingStatus.FAILED
+    assert job.stage == ProcessingStage.FAILED
+    assert "Processing enqueue failed: Redis is unavailable" in job.logs_json[-1]["message"]

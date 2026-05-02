@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
@@ -24,11 +25,34 @@ from app.services.chunking import chunk_sections
 from app.services.extraction import MaterialExtractor
 from app.services.generation import generate_flashcards, generate_note_bundle, generate_quiz
 
+PROCESSING_ENQUEUE_FAILURE_MESSAGE = (
+    "We saved the upload, but could not queue background processing. "
+    "Please retry after the worker is available."
+)
+
 
 def append_job_log(job: ProcessingJob, stage: ProcessingStage, message: str) -> None:
     logs = list(job.logs_json or [])
     logs.append({"stage": stage.value, "message": message, "timestamp": datetime.now(UTC).isoformat()})
     job.logs_json = logs
+
+
+def enqueue_processing_job(db: Session, *, material: Material, job: ProcessingJob, task) -> None:
+    try:
+        task.delay(material.id, job.id)
+    except Exception as exc:
+        material.processing_stage = ProcessingStage.FAILED
+        material.processing_status = ProcessingStatus.FAILED
+        material.error_message = PROCESSING_ENQUEUE_FAILURE_MESSAGE
+        job.stage = ProcessingStage.FAILED
+        job.status = ProcessingStatus.FAILED
+        job.error_message = PROCESSING_ENQUEUE_FAILURE_MESSAGE
+        job.finished_at = datetime.now(UTC)
+        append_job_log(job, ProcessingStage.FAILED, f"Processing enqueue failed: {exc}")
+        db.commit()
+        raise HTTPException(status_code=503, detail=PROCESSING_ENQUEUE_FAILURE_MESSAGE) from exc
+    append_job_log(job, ProcessingStage.UPLOADED, "Queued background processing task.")
+    db.commit()
 
 
 def _note_payload(bundle, note_type: NoteType) -> tuple[str, dict]:

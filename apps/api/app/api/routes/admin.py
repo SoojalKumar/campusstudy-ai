@@ -9,7 +9,7 @@ from app.schemas.material import MaterialResponse, ProcessingJobResponse
 from app.schemas.auth import UserResponse
 from app.services.admin import admin_metrics, disable_user
 from app.services.auth import serialize_user
-from app.services.processing import retry_processing_job
+from app.services.processing import enqueue_processing_job, retry_processing_job
 from app.workers.tasks import process_material_pipeline
 
 router = APIRouter()
@@ -57,14 +57,13 @@ def retry_admin_job(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
     retry_processing_job(db, job=job)
-    try:
-        process_material_pipeline.delay(job.material_id, job.id)
-    except Exception:
-        pass
+    material = db.query(Material).filter(Material.id == job.material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found.")
+    enqueue_processing_job(db, material=material, job=job, task=process_material_pipeline)
     return job
 
 
 @router.get("/metrics", response_model=AdminMetricsResponse)
 def metrics(db: Session = Depends(get_db), admin=Depends(require_role("admin", "moderator"))) -> AdminMetricsResponse:
     return admin_metrics(db)
-

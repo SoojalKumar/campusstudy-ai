@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db, require_role
 from app.models.entities import Material, ProcessingJob
 from app.schemas.material import ProcessingJobResponse
-from app.services.processing import retry_processing_job
+from app.services.processing import enqueue_processing_job, retry_processing_job
 from app.workers.tasks import process_material_pipeline
 
 router = APIRouter()
@@ -50,8 +50,8 @@ def retry_job(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
     retry_processing_job(db, job=job)
-    try:
-        process_material_pipeline.delay(job.material_id, job.id)
-    except Exception:
-        pass
+    material = db.query(Material).filter(Material.id == job.material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found.")
+    enqueue_processing_job(db, material=material, job=job, task=process_material_pipeline)
     return job

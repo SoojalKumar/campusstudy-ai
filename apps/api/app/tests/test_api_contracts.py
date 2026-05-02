@@ -120,6 +120,52 @@ def test_material_upload_creates_processing_job(client, db_session, seeded_data,
     assert material.processing_stage == ProcessingStage.UPLOADED
     assert saved_files[material.storage_key] == b"# Lecture 2\nStudy pipeline notes."
     assert queued_jobs == [(material.id, job.id)]
+    assert job.logs_json[-1]["message"] == "Queued background processing task."
+
+
+def test_material_upload_marks_failed_when_processing_enqueue_fails(client, db_session, seeded_data, monkeypatch):
+    saved_files: dict[str, bytes] = {}
+
+    class FakeStorageBackend:
+        def save_bytes(self, *, key: str, content: bytes, content_type: str) -> str:
+            saved_files[key] = content
+            return key
+
+        def load_bytes(self, key: str) -> bytes:
+            return saved_files[key]
+
+        def delete(self, key: str) -> None:
+            saved_files.pop(key, None)
+
+        def presigned_url(self, key: str) -> str:
+            return f"/fake-storage/{key}"
+
+    class BrokenPipelineTask:
+        def delay(self, material_id: str, job_id: str) -> None:
+            raise RuntimeError("Redis is unavailable")
+
+    monkeypatch.setattr("app.services.materials.get_storage_backend", lambda: FakeStorageBackend())
+    monkeypatch.setattr("app.services.materials.scan_file", lambda path: None)
+    monkeypatch.setattr("app.services.materials.process_material_pipeline", BrokenPipelineTask())
+
+    response = client.post(
+        "/api/v1/materials/upload",
+        headers=bearer_for(seeded_data["owner"]),
+        data={"course_id": seeded_data["course"].id, "title": "Queue Down Notes"},
+        files={"file": ("queue-down.md", b"# Queue down\nStill save the upload.", "text/markdown")},
+    )
+
+    assert response.status_code == 503
+    assert "could not queue background processing" in response.json()["detail"]
+    material = db_session.query(Material).filter(Material.title == "Queue Down Notes").one()
+    job = db_session.query(ProcessingJob).filter(ProcessingJob.material_id == material.id).one()
+
+    assert material.processing_status == ProcessingStatus.FAILED
+    assert material.processing_stage == ProcessingStage.FAILED
+    assert "could not queue background processing" in material.error_message
+    assert job.status == ProcessingStatus.FAILED
+    assert job.stage == ProcessingStage.FAILED
+    assert "Processing enqueue failed: Redis is unavailable" in job.logs_json[-1]["message"]
 
 
 def test_dashboard_overview_uses_camel_case_contract(client, db_session, seeded_data):

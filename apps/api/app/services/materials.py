@@ -14,6 +14,7 @@ from app.models.enums import ProcessingStage, ProcessingStatus
 from app.providers.storage import get_storage_backend
 from app.services.antivirus import scan_file
 from app.services.extraction import detect_material_kind
+from app.services.processing import enqueue_processing_job
 from app.workers.tasks import process_material_pipeline
 
 
@@ -133,10 +134,7 @@ def create_material_upload(
     db.commit()
     db.refresh(material)
 
-    try:
-        process_material_pipeline.delay(material.id, job.id)
-    except Exception:
-        pass
+    enqueue_processing_job(db, material=material, job=job, task=process_material_pipeline)
     return material
 
 
