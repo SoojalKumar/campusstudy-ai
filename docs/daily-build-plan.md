@@ -139,3 +139,19 @@ The product should feel like a serious campus study command center:
 ## Near-Term Priority
 
 Next priority should focus on operational confidence and processing visibility. The next best slice is: processing timeline polish, admin retry UX, Docker smoke verification from a clean checkout, and richer local fixtures for a complete upload-to-study-pack smoke flow.
+
+## Reliability Push: Day 19-25
+
+This phase turns the current pilot into a harder-to-break product. The rule for these
+days: every day must ship tests with the code, and every user-facing failure must be
+visible instead of silent.
+
+- Day 19: queue failure truth. Surface upload/retry enqueue failures in API, remove silent `except: pass`, add tests.
+- Day 20: processing idempotency. Make duplicate worker runs safe, document the state machine, add duplicate-task tests.
+- Day 21: RAG retrieval scale. Move toward database-first retrieval with deterministic SQLite fallback and high-volume tests.
+- Day 22: production guardrails. Fail fast on unsafe production secrets/mock AI config, document production env requirements.
+- Day 23: real upload smoke. Extend `make pilot-smoke` to upload a source, poll processing, and verify notes/decks/quizzes/chat.
+- Day 24: web recovery UX. Polish failed/pending material states, admin retry visibility, and web tests.
+- Day 25: mobile recovery UX plus full gate. Align mobile failure states and run backend, web, mobile, and smoke validations.
+
+Detailed files, commit names, gates, and done criteria live in `docs/engineering-execution-plan.md`.
