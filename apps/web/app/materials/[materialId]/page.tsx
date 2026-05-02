@@ -1,10 +1,10 @@
 "use client";
 
-import type { FlashcardDeckDTO, NoteSetDTO, QuizSetDTO } from "@campusstudy/types";
+import type { ChatThreadDTO, FlashcardDeckDTO, NoteSetDTO, QuizSetDTO } from "@campusstudy/types";
 import { formatNoteTypeLabel } from "@campusstudy/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { LayoutShell } from "@/components/layout-shell";
@@ -72,6 +72,7 @@ function formatSeconds(totalSeconds: number) {
 
 export default function MaterialDetailPage() {
   const params = useParams<{ materialId: string }>();
+  const router = useRouter();
   const materialId = params.materialId;
   const { token, hydrated } = useSession();
   const queryClient = useQueryClient();
@@ -100,6 +101,7 @@ export default function MaterialDetailPage() {
   const transcriptSegments = transcriptQuery.data ?? [];
   const chunks = chunksQuery.data ?? [];
   const canGenerate = hydrated && Boolean(token) && material?.processingStatus === "completed";
+  const canChat = hydrated && Boolean(token) && material?.processingStatus === "completed";
   const noteMutation = useMutation({
     mutationFn: () =>
       apiFetch<NoteSetDTO>("/notes/generate", {
@@ -135,6 +137,21 @@ export default function MaterialDetailPage() {
       setGeneratedQuizId(quiz.id);
       void queryClient.invalidateQueries({ queryKey: ["quiz-sets"] });
     }
+  });
+  const sourceChatMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<ChatThreadDTO>("/chat/threads", {
+        body: JSON.stringify({
+          answerStyle: "exam-oriented",
+          materialId,
+          scopeType: "material",
+          strictMode: true,
+          title: material?.title ? `${material.title} source chat` : "Material source chat"
+        }),
+        method: "POST",
+        token
+      }),
+    onSuccess: (thread) => router.push(`/chat/${thread.id}`)
   });
   const citations = chunks.slice(0, 4).map((chunk) => ({
     chunkId: chunk.id,
@@ -298,6 +315,13 @@ export default function MaterialDetailPage() {
             </div>
             <div className="mt-5 grid gap-3">
               <button
+                className="rounded-2xl border border-gold/20 bg-gold/10 px-4 py-3 text-left text-sm font-semibold text-gold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!canChat || sourceChatMutation.isPending}
+                onClick={() => sourceChatMutation.mutate()}
+              >
+                {sourceChatMutation.isPending ? "Opening source chat..." : "Ask this source in chat"}
+              </button>
+              <button
                 className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canGenerate || noteMutation.isPending}
                 onClick={() => noteMutation.mutate()}
@@ -324,6 +348,11 @@ export default function MaterialDetailPage() {
                 Sign in and wait for processing to complete before generating new study outputs.
               </p>
             ) : null}
+            {canGenerate ? (
+              <p className="mt-4 text-xs text-slate-500">
+                Source chat stays in strict citation mode so answers remain grounded in this exact uploaded material.
+              </p>
+            ) : null}
             {noteMutation.isSuccess ? <p className="mt-4 text-sm text-tide">Revision notes added below.</p> : null}
             {generatedDeckId ? (
               <Link className="mt-4 block text-sm font-semibold text-tide" href={`/flashcards/${generatedDeckId}`}>
@@ -335,11 +364,12 @@ export default function MaterialDetailPage() {
                 Open generated quiz
               </Link>
             ) : null}
-            {noteMutation.isError || deckMutation.isError || quizMutation.isError ? (
+            {noteMutation.isError || deckMutation.isError || quizMutation.isError || sourceChatMutation.isError ? (
               <p className="mt-4 text-sm text-ember">
                 {(noteMutation.error as Error | null)?.message ||
                   (deckMutation.error as Error | null)?.message ||
-                  (quizMutation.error as Error | null)?.message}
+                  (quizMutation.error as Error | null)?.message ||
+                  (sourceChatMutation.error as Error | null)?.message}
               </p>
             ) : null}
           </div>
