@@ -1,3 +1,4 @@
+import type { AuthUser } from "@campusstudy/types";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
@@ -7,7 +8,7 @@ import { apiFetch } from "../../lib/api";
 import { useSession } from "../../lib/session";
 
 export default function LoginScreen() {
-  const { setToken } = useSession();
+  const { setSession, authState } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -15,11 +16,11 @@ export default function LoginScreen() {
   async function loginWithCredentials(nextEmail = email, nextPassword = password) {
     try {
       setError(null);
-      const response = await apiFetch<{ access_token: string }>("/auth/login", {
+      const response = await apiFetch<{ access_token: string; user: AuthUser }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email: nextEmail, password: nextPassword })
       });
-      await setToken(response.access_token);
+      await setSession(response.access_token, response.user);
       router.replace("/(tabs)");
     } catch (nextError) {
       setError((nextError as Error).message);
@@ -36,6 +37,7 @@ export default function LoginScreen() {
       <Text style={{ color: "#a6b4c9", fontSize: 16 }}>
         Sign in and review due cards between classes.
       </Text>
+      {authState === "expired" ? <Text style={{ color: "#f6d78b", fontSize: 13 }}>Session expired. Sign back in to reopen your study workspace.</Text> : null}
       <View style={{ gap: 12, marginTop: 16 }}>
         <TextInput
           value={email}

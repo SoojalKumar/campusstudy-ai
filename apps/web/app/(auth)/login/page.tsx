@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setSession } = useSession();
+  const { setSession, authState } = useSession();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null);
@@ -58,6 +58,11 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-8">
           <h2 className="text-3xl font-semibold text-white">Sign in</h2>
           <p className="mt-2 text-sm text-slate-300">Use your university email and password.</p>
+        {authState === "expired" ? (
+          <p className="mt-4 rounded-2xl border border-gold/20 bg-gold/10 px-4 py-3 text-sm text-gold">
+            Your session expired. Sign back in to continue your study workspace.
+          </p>
+        ) : null}
         <div className="mt-6 space-y-4">
           <input
             value={form.email}
