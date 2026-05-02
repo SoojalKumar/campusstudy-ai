@@ -42,6 +42,28 @@ type ChunkResponse = {
   endSecond?: number | null;
 };
 
+const processingTimeline = [
+  "uploaded",
+  "extracting",
+  "transcribing",
+  "chunking",
+  "embedding",
+  "generating_notes",
+  "generating_flashcards",
+  "generating_quiz",
+  "completed"
+] as const;
+
+const noteGenerationModes = [
+  { value: "summary", label: "Summary", helper: "Fast overview for first pass" },
+  { value: "concise", label: "Concise", helper: "Trimmed revision-friendly notes" },
+  { value: "detailed", label: "Detailed", helper: "Full lecture breakdown" },
+  { value: "glossary", label: "Glossary", helper: "Key terms and definitions" },
+  { value: "exam_questions", label: "Exam Qs", helper: "Likely exam-style prompts" },
+  { value: "teach_me", label: "Teach Me", helper: "Simple explanation mode" },
+  { value: "revision_sheet", label: "Revision Sheet", helper: "Last-minute prep format" }
+] as const;
+
 function formatSeconds(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -56,6 +78,7 @@ export default function MaterialDetailPage() {
   const [generatedNoteId, setGeneratedNoteId] = useState<string | null>(null);
   const [generatedDeckId, setGeneratedDeckId] = useState<string | null>(null);
   const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
+  const [selectedNoteType, setSelectedNoteType] = useState<(typeof noteGenerationModes)[number]["value"]>("revision_sheet");
   const materialQuery = useAuthedQuery<MaterialResponse>({
     queryKey: ["material", materialId],
     path: `/materials/${materialId}`
@@ -80,7 +103,7 @@ export default function MaterialDetailPage() {
   const noteMutation = useMutation({
     mutationFn: () =>
       apiFetch<NoteSetDTO>("/notes/generate", {
-        body: JSON.stringify({ materialId, noteType: "revision_sheet" }),
+        body: JSON.stringify({ materialId, noteType: selectedNoteType }),
         method: "POST",
         token
       }),
@@ -127,6 +150,7 @@ export default function MaterialDetailPage() {
   }));
   const sourcePreviewText = material?.transcriptText || material?.extractedText;
   const supportsTimestampLinks = material?.mimeType.startsWith("audio/") || material?.mimeType.startsWith("video/");
+  const activeTimelineIndex = processingTimeline.indexOf((material?.processingStage as (typeof processingTimeline)[number]) ?? "uploaded");
 
   if (!material && materialQuery.hydrated) {
     return (
@@ -175,6 +199,37 @@ export default function MaterialDetailPage() {
           </div>
           <SourceFileActions downloadUrl={material.downloadUrl} fileName={material.fileName} />
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
+            <h2 className="text-lg font-semibold text-white">Processing timeline</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {processingTimeline.map((stage, index) => {
+                const isActive = stage === material.processingStage;
+                const isComplete = activeTimelineIndex >= 0 && index <= activeTimelineIndex;
+                return (
+                  <div
+                    key={stage}
+                    className={`rounded-2xl border p-4 transition ${
+                      isActive
+                        ? "border-tide/40 bg-tide/10"
+                        : isComplete
+                          ? "border-gold/25 bg-gold/10"
+                          : "border-white/10 bg-white/[0.03]"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{index + 1}</p>
+                    <p className={`mt-2 text-sm font-semibold ${isActive ? "text-tide" : isComplete ? "text-gold" : "text-slate-200"}`}>
+                      {formatNoteTypeLabel(stage)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-sm text-slate-400">
+              {material.processingStatus === "failed"
+                ? "This source stalled in the pipeline. Admin can inspect logs and retry the background job."
+                : "Each upload moves through extraction, chunking, embeddings, and study-pack generation before it becomes fully usable."}
+            </p>
+          </div>
+          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
             <h2 className="text-lg font-semibold text-white">Transcript timeline</h2>
             <div className="mt-4 space-y-3">
               {transcriptSegments.length ? (
@@ -219,12 +274,35 @@ export default function MaterialDetailPage() {
               Create fresh notes, due-card decks, and a scored quiz directly from this material.
             </p>
             <div className="mt-5 grid gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Note mode</p>
+              <div className="grid gap-2">
+                {noteGenerationModes.map((mode) => {
+                  const selected = mode.value === selectedNoteType;
+                  return (
+                    <button
+                      key={mode.value}
+                      className={`rounded-2xl border px-4 py-3 text-left transition ${
+                        selected
+                          ? "border-tide/40 bg-tide/10"
+                          : "border-white/10 bg-slate-950/55 hover:border-white/20"
+                      }`}
+                      onClick={() => setSelectedNoteType(mode.value)}
+                      type="button"
+                    >
+                      <p className={`text-sm font-semibold ${selected ? "text-tide" : "text-white"}`}>{mode.label}</p>
+                      <p className="mt-1 text-xs text-slate-400">{mode.helper}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3">
               <button
                 className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canGenerate || noteMutation.isPending}
                 onClick={() => noteMutation.mutate()}
               >
-                {noteMutation.isPending ? "Generating revision sheet..." : "Generate revision notes"}
+                {noteMutation.isPending ? `Generating ${formatNoteTypeLabel(selectedNoteType)}...` : `Generate ${formatNoteTypeLabel(selectedNoteType)}`}
               </button>
               <button
                 className="rounded-2xl border border-white/10 bg-tide/90 px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
