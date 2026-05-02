@@ -11,10 +11,16 @@ router = APIRouter()
 
 
 @router.get("/jobs", response_model=list[ProcessingJobResponse])
-def list_jobs(db: Session = Depends(get_db), user=Depends(get_current_user)) -> list[ProcessingJob]:
+def list_jobs(
+    material_id: str | None = None,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+) -> list[ProcessingJob]:
     query = db.query(ProcessingJob).join(Material, ProcessingJob.material_id == Material.id)
     if user.role.value not in {"admin", "moderator"}:
         query = query.filter(Material.owner_user_id == user.id)
+    if material_id:
+        query = query.filter(ProcessingJob.material_id == material_id)
     return query.filter(ProcessingJob.deleted_at.is_(None)).order_by(ProcessingJob.created_at.desc()).all()
 
 

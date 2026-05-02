@@ -1,5 +1,5 @@
 import { formatNoteTypeLabel } from "@campusstudy/types";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -7,7 +7,7 @@ import { ActionRow, Card, EmptyState, Pill, ProgressBar, SectionHeader } from ".
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
 import { useSession } from "../../lib/session";
-import { colors, spacing, typography } from "../../lib/theme";
+import { colors, radius, spacing, typography } from "../../lib/theme";
 
 type MobileCourseDetail = {
   id: string;
@@ -47,7 +47,7 @@ function statusTone(status: MobileMaterial["processingStatus"]) {
 export default function CourseDetailScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const resolvedCourseId = courseId;
-  const { token, hydrated } = useSession();
+  const { token, hydrated, authState } = useSession();
   const courseQuery = useQuery<MobileCourseDetail>({
     queryKey: ["mobile-course", resolvedCourseId],
     queryFn: () => apiFetch<MobileCourseDetail>(`/courses/${resolvedCourseId}`, { token }),
@@ -68,13 +68,34 @@ export default function CourseDetailScreen() {
   const notes = notesQuery.data ?? [];
   const completion = Math.max(0.12, Math.min(1, materials.filter((item) => item.processingStatus === "completed").length / Math.max(1, materials.length)));
   const isLoading = courseQuery.isFetching || materialsQuery.isFetching || notesQuery.isFetching;
+  const courseChatMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ id: string }>("/chat/threads", {
+        body: JSON.stringify({
+          answerStyle: "exam-oriented",
+          courseId: resolvedCourseId,
+          scopeType: "course",
+          strictMode: true,
+          title: `${course?.code ?? "Course"} tutor`
+        }),
+        method: "POST",
+        token
+      }),
+    onSuccess: (thread) => {
+      router.push(`/chat/${thread.id}` as any);
+    }
+  });
 
   if (!course && hydrated) {
     return (
       <Screen>
         <Card tone="warning">
-          <Text style={styles.warningTitle}>{token ? "Course not found" : "Sign in to view this course"}</Text>
-          <Text style={styles.warningCopy}>Course workspaces are scoped to your university account and enrollments.</Text>
+          <Text style={styles.warningTitle}>{authState === "expired" ? "Session expired" : token ? "Course not found" : "Sign in to view this course"}</Text>
+          <Text style={styles.warningCopy}>
+            {authState === "expired"
+              ? "Sign back in to reopen your enrolled courses, study packs, and uploads."
+              : "Course workspaces are scoped to your university account and enrollments."}
+          </Text>
         </Card>
       </Screen>
     );
@@ -102,6 +123,14 @@ export default function CourseDetailScreen() {
           <Text style={styles.metaText}>{course.term ?? "Term"} {course.year ?? ""}</Text>
         </View>
         <ProgressBar value={completion} />
+        <Pressable
+          disabled={!token || courseChatMutation.isPending}
+          onPress={() => courseChatMutation.mutate()}
+          style={({ pressed }) => [styles.tutorButton, pressed && styles.pressed, courseChatMutation.isPending && styles.disabled]}
+        >
+          <Text style={styles.tutorButtonText}>{courseChatMutation.isPending ? "Opening tutor..." : "Open course tutor"}</Text>
+        </Pressable>
+        {courseChatMutation.isError ? <Text style={styles.warningCopy}>{(courseChatMutation.error as Error).message}</Text> : null}
       </Card>
 
       <View style={styles.quickGrid}>
@@ -197,6 +226,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm
   },
+  tutorButton: {
+    alignItems: "center",
+    backgroundColor: colors.text,
+    borderRadius: radius.md,
+    padding: spacing.md
+  },
+  tutorButtonText: {
+    color: colors.ink,
+    fontWeight: "900"
+  },
   metaText: {
     color: colors.muted,
     fontSize: 13,
@@ -283,5 +322,8 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.74,
     transform: [{ scale: 0.99 }]
+  },
+  disabled: {
+    opacity: 0.55
   }
 });

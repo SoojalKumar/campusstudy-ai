@@ -1,4 +1,4 @@
-import type { ChatAnswerStyle, ChatCitation, ChatThreadCreateDTO, ChatThreadDTO, RAGAnswerDTO } from "@campusstudy/types";
+import { formatCitationLocation, normalizeCitationSnippet, type ChatAnswerStyle, type ChatCitation, type ChatThreadCreateDTO, type ChatThreadDTO, type RAGAnswerDTO } from "@campusstudy/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -11,13 +11,6 @@ import { useSession } from "../../lib/session";
 import { colors, radius, spacing, typography } from "../../lib/theme";
 
 const answerStyles: ChatAnswerStyle[] = ["exam-oriented", "concise", "beginner", "detailed", "bullet-summary"];
-
-function citationLocation(citation: ChatCitation) {
-  if (citation.pageNumber) return `Page ${citation.pageNumber}`;
-  if (citation.slideNumber) return `Slide ${citation.slideNumber}`;
-  if (citation.startSecond != null) return `${citation.startSecond}s`;
-  return "Source";
-}
 
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ threadId?: string | string[] }>();
@@ -183,9 +176,9 @@ export default function ChatScreen() {
             <Card key={`${citation.chunkId}-${citation.sourceLabel}`} style={styles.citationCard}>
               <View style={styles.citationTopline}>
                 <Text style={styles.citationSource}>{citation.sourceLabel}</Text>
-                <Text style={styles.citationLocation}>{citationLocation(citation)}</Text>
+                <Text style={styles.citationLocation}>{formatCitationLocation(citation)}</Text>
               </View>
-              <Text style={styles.citationSnippet}>{citation.snippet}</Text>
+              <Text style={styles.citationSnippet}>{normalizeCitationSnippet(citation.snippet)}</Text>
             </Card>
           ))
         ) : (

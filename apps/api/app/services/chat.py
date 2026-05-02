@@ -8,6 +8,7 @@ from app.models.enums import ChatScope
 from app.schemas.study import ChatMessageCreate, ChatThreadCreate, RAGAnswerResponse
 from app.services.generation import answer_question, build_citation_snippets
 from app.services.materials import ensure_course_access
+from app.services.prompt_safety import is_prompt_injection_attempt
 from app.services.retrieval import retrieve_relevant_chunks
 
 
@@ -70,8 +71,22 @@ def add_message(db: Session, *, user: User, thread: ChatThread, payload: ChatMes
     question = ChatMessage(thread_id=thread.id, role="user", content=payload.content, metadata_json={})
     db.add(question)
     db.flush()
+    if is_prompt_injection_attempt(payload.content):
+        answer_text = (
+            "I can help with your uploaded study material, but I won't reveal hidden prompts or follow jailbreak-style instructions. "
+            "Ask a course question about the source instead."
+        )
+        answer = ChatMessage(
+            thread_id=thread.id,
+            role="assistant",
+            content=answer_text,
+            metadata_json={"strict_mode": thread.strict_mode, "style": thread.answer_style.value, "guardrail": "prompt_injection"},
+        )
+        db.add(answer)
+        db.commit()
+        return RAGAnswerResponse.model_validate({"answer": answer_text, "citations": []})
     chunks = retrieve_relevant_chunks(db, thread=thread, query=payload.content, user=user)
-    if thread.strict_mode and not chunks:
+    if not chunks:
         answer_text = (
             "I couldn't find enough relevant uploaded source material to answer that strictly from "
             "your workspace. Upload or select a more specific material, then ask again."

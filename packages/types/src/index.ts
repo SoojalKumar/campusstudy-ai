@@ -139,6 +139,29 @@ export interface ChatCitation {
   snippet: string;
 }
 
+export function formatTimestampSeconds(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+export function formatCitationLocation(
+  citation: Pick<ChatCitation, "pageNumber" | "slideNumber" | "startSecond" | "endSecond">
+) {
+  if (citation.pageNumber) return `Page ${citation.pageNumber}`;
+  if (citation.slideNumber) return `Slide ${citation.slideNumber}`;
+  if (citation.startSecond != null) {
+    const start = formatTimestampSeconds(citation.startSecond);
+    const end = formatTimestampSeconds(citation.endSecond ?? citation.startSecond);
+    return `${start}-${end}`;
+  }
+  return "Source";
+}
+
+export function normalizeCitationSnippet(snippet: string) {
+  return snippet.replace(/\s+/g, " ").trim();
+}
+
 export type ChatScope = "material" | "topic" | "course" | "workspace";
 export type ChatAnswerStyle = "beginner" | "concise" | "detailed" | "exam-oriented" | "bullet-summary";
 

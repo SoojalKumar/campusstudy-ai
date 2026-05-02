@@ -15,5 +15,4 @@ def test_format_source_label_prefers_page_then_slide_then_time():
     )
     assert format_source_label(page_chunk) == "Page 8"
     assert format_source_label(slide_chunk) == "Slide 4"
-    assert format_source_label(transcript_chunk) == "12s-34s"
-
+    assert format_source_label(transcript_chunk) == "0:12-0:34"
