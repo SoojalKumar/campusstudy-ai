@@ -12,6 +12,7 @@ import { SourceFileActions, SourceTimestampButton } from "@/components/source-fi
 import { SourceCitationCard } from "@/components/source-citation-card";
 import { apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
+import { canUseProcessedMaterial, materialRecoveryCopy } from "@/lib/material-status";
 import { useSession } from "@/lib/session";
 
 type MaterialResponse = {
@@ -100,8 +101,9 @@ export default function MaterialDetailPage() {
   const notes = notesQuery.data ?? [];
   const transcriptSegments = transcriptQuery.data ?? [];
   const chunks = chunksQuery.data ?? [];
-  const canGenerate = hydrated && Boolean(token) && material?.processingStatus === "completed";
-  const canChat = hydrated && Boolean(token) && material?.processingStatus === "completed";
+  const materialReady = material ? canUseProcessedMaterial(material) : false;
+  const canGenerate = hydrated && Boolean(token) && materialReady;
+  const canChat = hydrated && Boolean(token) && materialReady;
   const noteMutation = useMutation({
     mutationFn: () =>
       apiFetch<NoteSetDTO>("/notes/generate", {
@@ -168,6 +170,7 @@ export default function MaterialDetailPage() {
   const sourcePreviewText = material?.transcriptText || material?.extractedText;
   const supportsTimestampLinks = material?.mimeType.startsWith("audio/") || material?.mimeType.startsWith("video/");
   const activeTimelineIndex = processingTimeline.indexOf((material?.processingStage as (typeof processingTimeline)[number]) ?? "uploaded");
+  const recoveryCopy = material ? materialRecoveryCopy(material) : null;
 
   if (!material && materialQuery.hydrated) {
     return (
@@ -240,11 +243,20 @@ export default function MaterialDetailPage() {
                 );
               })}
             </div>
-            <p className="mt-4 text-sm text-slate-400">
-              {material.processingStatus === "failed"
-                ? "This source stalled in the pipeline. Admin can inspect logs and retry the background job."
-                : "Each upload moves through extraction, chunking, embeddings, and study-pack generation before it becomes fully usable."}
-            </p>
+            {recoveryCopy ? (
+              <div
+                className={`mt-4 rounded-2xl border px-4 py-3 ${
+                  recoveryCopy.tone === "failed"
+                    ? "border-ember/30 bg-ember/10"
+                    : recoveryCopy.tone === "completed"
+                      ? "border-tide/30 bg-tide/10"
+                      : "border-gold/25 bg-gold/10"
+                }`}
+              >
+                <p className="text-sm font-semibold text-white">{recoveryCopy.title}</p>
+                <p className="mt-1 text-sm text-slate-400">{recoveryCopy.body}</p>
+              </div>
+            ) : null}
           </div>
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
             <h2 className="text-lg font-semibold text-white">Transcript timeline</h2>
