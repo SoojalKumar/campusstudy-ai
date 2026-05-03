@@ -8,6 +8,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { ActionRow, Card, EmptyState, Pill, SectionHeader } from "../../components/primitives";
 import { Screen } from "../../components/screen";
 import { apiFetch } from "../../lib/api";
+import { canUseProcessedMaterial, materialRecoveryCopy } from "../../lib/material-status";
 import { useSession } from "../../lib/session";
 import { colors, radius, spacing, typography } from "../../lib/theme";
 
@@ -110,12 +111,14 @@ export default function MaterialDetailScreen() {
   const activeJob = jobs[0] ?? null;
   const sourcePreview = material?.transcriptText ?? material?.extractedText;
   const isLoading = materialQuery.isFetching || notesQuery.isFetching || transcriptQuery.isFetching || jobsQuery.isFetching;
-  const canGenerate = hydrated && Boolean(token) && material?.processingStatus === "completed";
+  const materialReady = material ? canUseProcessedMaterial(material) : false;
+  const canGenerate = hydrated && Boolean(token) && materialReady;
   const canChat = canGenerate;
   const canRetryJob = Boolean(activeJob && activeJob.status === "failed" && (user?.role === "admin" || user?.role === "moderator"));
   const activeTimelineIndex = processingTimeline.indexOf(material?.processingStage ?? "uploaded");
   const transcriptDuration = transcript.length ? transcript[transcript.length - 1]?.endSecond ?? 0 : 0;
   const transcriptHighlights = transcript.slice(0, 3);
+  const recoveryCopy = material ? materialRecoveryCopy(material) : null;
 
   const noteMutation = useMutation({
     mutationFn: () =>
@@ -225,10 +228,19 @@ export default function MaterialDetailScreen() {
           <Pill label={material.processingStatus} tone={statusTone(material.processingStatus)} />
           {activeJob ? <Text style={styles.statusMeta}>Attempt {activeJob.attempts}</Text> : null}
         </View>
-        {material.processingStatus === "failed" ? (
-          <Text style={styles.errorText}>
-            {material.errorMessage ?? activeJob?.errorMessage ?? "This upload stalled in the processing pipeline."}
-          </Text>
+        {recoveryCopy ? (
+          <View
+            style={[
+              styles.recoveryBox,
+              recoveryCopy.tone === "failed" && styles.recoveryBoxFailed,
+              recoveryCopy.tone === "completed" && styles.recoveryBoxReady
+            ]}
+          >
+            <Text style={styles.recoveryTitle}>{recoveryCopy.title}</Text>
+            <Text style={recoveryCopy.tone === "failed" ? styles.errorText : styles.generateHint}>
+              {recoveryCopy.tone === "failed" ? material.errorMessage ?? activeJob?.errorMessage ?? recoveryCopy.body : recoveryCopy.body}
+            </Text>
+          </View>
         ) : null}
       </Card>
 
@@ -271,11 +283,7 @@ export default function MaterialDetailScreen() {
               );
             })}
           </View>
-          <Text style={styles.generateHint}>
-            {material.processingStatus === "failed"
-              ? "Processing stopped before the study pack finished. Review the latest logs below and retry if you have admin access."
-              : "Uploads move through extraction, chunking, embeddings, and study-pack generation before they become fully searchable."}
-          </Text>
+          <Text style={styles.generateHint}>{recoveryCopy?.body}</Text>
         </Card>
       </View>
 
@@ -486,6 +494,27 @@ const styles = StyleSheet.create({
     color: colors.dim,
     fontSize: 12,
     fontWeight: "700"
+  },
+  recoveryBox: {
+    backgroundColor: colors.goldSoft,
+    borderColor: "rgba(246,215,139,0.22)",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.md
+  },
+  recoveryBoxFailed: {
+    backgroundColor: colors.emberSoft,
+    borderColor: "rgba(255,139,93,0.28)"
+  },
+  recoveryBoxReady: {
+    backgroundColor: colors.tideSoft,
+    borderColor: "rgba(115,201,199,0.3)"
+  },
+  recoveryTitle: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "900"
   },
   metricGrid: {
     flexDirection: "row",
