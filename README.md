@@ -207,6 +207,28 @@ LLM_MODEL=llama-4-scout
 
 The application code talks only to provider interfaces, so you can later add self-hosted inference or other campus-specific model backends without changing the study services.
 
+## Production guardrails
+
+Local development is intentionally easy, but production fails fast when unsafe defaults are present.
+
+Required production settings:
+
+```env
+ENVIRONMENT=production
+SECRET_KEY=replace-with-at-least-32-random-characters
+ENABLE_MOCK_AI=false
+LLM_PROVIDER=meta_llama
+LLAMA_API_KEY=your_real_provider_key
+```
+
+If a private pilot deliberately needs mock AI in production, set:
+
+```env
+ALLOW_MOCK_AI_IN_PRODUCTION=true
+```
+
+That override should be temporary and documented for the deployment. Without it, the API refuses to start with mock AI enabled so students do not receive fixture-style study outputs from a real production surface.
+
 ## Testing
 
 Backend:

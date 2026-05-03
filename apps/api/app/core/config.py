@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     llama_api_key: str | None = None
     llm_model: str = "llama-4-scout"
     enable_mock_ai: bool = True
+    allow_mock_ai_in_production: bool = False
 
     embedding_provider: Literal["mock"] = "mock"
     embedding_dimensions: int = 16
@@ -56,8 +57,20 @@ class Settings(BaseSettings):
     def allowed_domains(self) -> set[str]:
         return {domain.strip().lower() for domain in self.allowed_email_domains.split(",") if domain}
 
+    def validate_production_ready(self) -> None:
+        if self.environment != "production":
+            return
+        errors: list[str] = []
+        if self.secret_key in {"change-me", "change-me-in-dev"} or len(self.secret_key) < 32:
+            errors.append("SECRET_KEY must be a unique production secret with at least 32 characters.")
+        if self.enable_mock_ai and not self.allow_mock_ai_in_production:
+            errors.append("ENABLE_MOCK_AI must be false in production unless ALLOW_MOCK_AI_IN_PRODUCTION=true.")
+        if self.llm_provider == "meta_llama" and not self.enable_mock_ai and not self.llama_api_key:
+            errors.append("LLAMA_API_KEY is required when LLM_PROVIDER=meta_llama and mock AI is disabled.")
+        if errors:
+            raise RuntimeError("Production settings are not safe: " + " ".join(errors))
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

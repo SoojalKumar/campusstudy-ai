@@ -14,6 +14,7 @@ from app.db.session import engine
 from app.models import *  # noqa: F401,F403
 
 settings = get_settings()
+settings.validate_production_ready()
 configure_logging()
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
