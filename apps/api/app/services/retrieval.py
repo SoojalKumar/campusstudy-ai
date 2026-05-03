@@ -37,6 +37,9 @@ STOPWORDS = {
     "your",
 }
 
+MATERIAL_SCOPE_LIMIT = 1000
+CHUNK_CANDIDATE_LIMIT = 2000
+
 
 def _cosine_similarity(left: list[float], right: list[float]) -> float:
     numerator = sum(a * b for a, b in zip(left, right, strict=False))
@@ -90,13 +93,14 @@ def retrieve_relevant_chunks(
         material_scope = material_scope.filter(Material.topic_id == thread.topic_id)
     elif thread.course_id:
         material_scope = material_scope.filter(Material.course_id == thread.course_id)
-    material_ids = [material_id for (material_id,) in material_scope.limit(250).all()]
+    material_ids = [material_id for (material_id,) in material_scope.limit(MATERIAL_SCOPE_LIMIT).all()]
     if not material_ids:
         return []
     chunks = (
         db.query(MaterialChunk)
         .filter(MaterialChunk.material_id.in_(material_ids), MaterialChunk.deleted_at.is_(None))
-        .limit(250)
+        .order_by(MaterialChunk.material_id, MaterialChunk.chunk_index)
+        .limit(CHUNK_CANDIDATE_LIMIT)
         .all()
     )
     scored = [(chunk, _score_chunk(chunk, query_vector, query_tokens)) for chunk in chunks]
