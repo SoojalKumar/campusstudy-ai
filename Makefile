@@ -3,7 +3,7 @@ SHELL := /bin/zsh
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 API_DIR := $(ROOT_DIR)apps/api
 
-.PHONY: preflight setup api-install api-dev migrate seed pilot-smoke test lint docker-up docker-down web-dev mobile-dev
+.PHONY: preflight setup api-install api-dev api-worker migrate seed pilot-smoke test lint docker-up docker-down web-dev mobile-dev
 
 preflight:
 	cd $(ROOT_DIR) && python3 scripts/preflight.py
@@ -21,6 +21,9 @@ api-install:
 api-dev:
 	cd $(API_DIR) && source .venv/bin/activate && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
+api-worker:
+	cd $(API_DIR) && source .venv/bin/activate && celery -A app.workers.celery_app.celery_app worker --loglevel=INFO
+
 migrate:
 	cd $(API_DIR) && source .venv/bin/activate && alembic upgrade head
 
@@ -28,7 +31,7 @@ seed:
 	cd $(API_DIR) && source .venv/bin/activate && python -m app.seed.run
 
 pilot-smoke:
-	cd $(ROOT_DIR) && python3 scripts/pilot_smoke.py
+	cd $(ROOT_DIR) && API_BASE_URL=$${API_BASE_URL:-http://localhost:8000/api/v1} python3 scripts/pilot_smoke.py
 
 test:
 	cd $(API_DIR) && source .venv/bin/activate && pytest

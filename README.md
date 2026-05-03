@@ -127,7 +127,7 @@ python -m app.seed.run
 ### 5. Run API
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+make api-dev
 ```
 
 ### 6. Run worker
@@ -135,9 +135,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 In another shell:
 
 ```bash
-cd apps/api
-source .venv/bin/activate
-celery -A app.workers.celery_app.celery_app worker --loglevel=INFO
+make api-worker
 ```
 
 ### 7. Run web
@@ -174,6 +172,8 @@ make setup
 make migrate
 make seed
 make api-dev
+make api-worker
+make pilot-smoke
 make docker-up
 make docker-down
 make test
@@ -266,9 +266,11 @@ You can smoke-test the same flow through the API:
 
 ```bash
 make pilot-smoke
+# For a non-default API process:
+API_BASE_URL=http://127.0.0.1:8010/api/v1 make pilot-smoke
 ```
 
-The smoke test logs in with local student and admin fixtures, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, uploads a fresh text source, waits for processing, verifies generated study assets, and checks citations for the uploaded material.
+The smoke test logs in with local student and admin fixtures, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, uploads a fresh text source, waits for processing, verifies generated study assets, and checks citations for the uploaded material. Keep the API and Celery worker pointed at the same checkout/environment or the uploaded source will remain pending.
 
 ## Known limitations
 
