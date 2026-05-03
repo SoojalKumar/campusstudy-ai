@@ -4,11 +4,13 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/api/v1").rstrip("/")
+UPLOAD_TIMEOUT_SECONDS = int(os.environ.get("PILOT_SMOKE_UPLOAD_TIMEOUT_SECONDS", "90"))
 
 
 def request(path: str, *, token: str | None = None, method: str = "GET", payload: dict | None = None):
@@ -31,6 +33,68 @@ def request(path: str, *, token: str | None = None, method: str = "GET", payload
         raise RuntimeError(
             f"Could not reach API at {API_BASE_URL}. Start it with `make api-dev` or Docker Compose."
         ) from exc
+
+
+def upload_text_material(*, token: str, course_id: str) -> dict:
+    boundary = "----campusstudy-pilot-smoke-boundary"
+    title = f"Pilot Smoke Upload {int(time.time())}"
+    content = (
+        "Pilot smoke upload verifies the real processing pipeline. "
+        "Dijkstra relaxation updates shortest path estimates with a priority queue. "
+        "This source should produce notes, flashcards, quiz questions, and cited chat answers."
+    ).encode("utf-8")
+    parts = [
+        (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="course_id"\r\n\r\n'
+            f"{course_id}\r\n"
+        ).encode("utf-8"),
+        (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="title"\r\n\r\n'
+            f"{title}\r\n"
+        ).encode("utf-8"),
+        (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="pilot-smoke-upload.txt"\r\n'
+            "Content-Type: text/plain\r\n\r\n"
+        ).encode("utf-8"),
+        content,
+        f"\r\n--{boundary}--\r\n".encode("utf-8"),
+    ]
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+    }
+    req = urllib.request.Request(
+        f"{API_BASE_URL}/materials/upload",
+        data=b"".join(parts),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"POST /materials/upload failed with {exc.code}: {body}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Could not upload material to API at {API_BASE_URL}.") from exc
+
+
+def wait_for_material_completed(material_id: str, *, token: str) -> dict:
+    deadline = time.time() + UPLOAD_TIMEOUT_SECONDS
+    last_status = "unknown"
+    while time.time() < deadline:
+        material = request(f"/materials/{material_id}/status", token=token)
+        last_status = f"{material['processingStatus']}/{material['processingStage']}"
+        if material["processingStatus"] == "completed":
+            return material
+        if material["processingStatus"] == "failed":
+            raise RuntimeError(f"Uploaded material failed processing: {material.get('errorMessage')}")
+        time.sleep(2)
+    raise RuntimeError(f"Uploaded material did not complete within {UPLOAD_TIMEOUT_SECONDS}s. Last status: {last_status}")
 
 
 def login(email: str, password: str) -> tuple[str, dict]:
@@ -133,6 +197,42 @@ def main() -> int:
     if not answer["citations"]:
         raise RuntimeError("Expected RAG citations for seeded workspace chat.")
     print(f"OK RAG chat citations: {len(answer['citations'])}")
+
+    uploaded = upload_text_material(token=student_token, course_id=material["courseId"])
+    print(f"OK upload accepted: {uploaded['title']}")
+    completed_upload = wait_for_material_completed(uploaded["id"], token=student_token)
+    print(f"OK upload processed: {completed_upload['processingStage']}")
+    uploaded_notes = request(f"/notes/by-material/{uploaded['id']}", token=student_token)
+    assert_non_empty("uploaded material notes", uploaded_notes)
+    uploaded_decks = [
+        deck for deck in request("/flashcards/decks", token=student_token) if deck.get("materialId") == uploaded["id"]
+    ]
+    uploaded_quizzes = [
+        quiz for quiz in request("/quizzes/sets", token=student_token) if quiz.get("materialId") == uploaded["id"]
+    ]
+    assert_non_empty("uploaded material flashcard deck", uploaded_decks)
+    assert_non_empty("uploaded material quiz set", uploaded_quizzes)
+    upload_thread = request(
+        "/chat/threads",
+        token=student_token,
+        method="POST",
+        payload={
+            "title": "Pilot upload source chat",
+            "scopeType": "material",
+            "materialId": uploaded["id"],
+            "strictMode": True,
+            "answerStyle": "exam-oriented",
+        },
+    )
+    upload_answer = request(
+        f"/chat/threads/{upload_thread['id']}/messages",
+        token=student_token,
+        method="POST",
+        payload={"content": "What does this source say about Dijkstra relaxation?"},
+    )
+    if not upload_answer["citations"]:
+        raise RuntimeError("Expected RAG citations for uploaded material chat.")
+    print(f"OK uploaded material RAG citations: {len(upload_answer['citations'])}")
     print("Pilot smoke passed.")
     return 0
 
@@ -142,4 +242,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from None

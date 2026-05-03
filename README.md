@@ -268,7 +268,7 @@ You can smoke-test the same flow through the API:
 make pilot-smoke
 ```
 
-The smoke test logs in with local student and admin fixtures, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, posts a question, and verifies citations exist.
+The smoke test logs in with local student and admin fixtures, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, uploads a fresh text source, waits for processing, verifies generated study assets, and checks citations for the uploaded material.
 
 ## Known limitations
 
