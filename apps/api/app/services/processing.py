@@ -80,6 +80,10 @@ def run_material_pipeline(material_id: str, job_id: str) -> None:
         job = db.query(ProcessingJob).filter(ProcessingJob.id == job_id).first()
         if not material or not job:
             return
+        if job.status != ProcessingStatus.PENDING:
+            append_job_log(job, job.stage, "Processing task skipped because the job is not pending.")
+            db.commit()
+            return
 
         storage = get_storage_backend()
         extractor = MaterialExtractor()
