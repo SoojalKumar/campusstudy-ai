@@ -10,4 +10,4 @@ celery_app = Celery(
     backend=settings.celery_result_backend,
 )
 celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json")
-
+celery_app.conf.imports = ("app.workers.tasks",)
