@@ -172,6 +172,17 @@ export default function MaterialDetailPage() {
   const activeTimelineIndex = processingTimeline.indexOf((material?.processingStage as (typeof processingTimeline)[number]) ?? "uploaded");
   const recoveryCopy = material ? materialRecoveryCopy(material) : null;
   const materialError = materialQuery.error || notesQuery.error || transcriptQuery.error || chunksQuery.error;
+  const materialLoading = materialQuery.hasSession && (materialQuery.isLoading || materialQuery.isFetching);
+
+  if (!material && materialLoading) {
+    return (
+      <LayoutShell>
+        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+          Loading material...
+        </div>
+      </LayoutShell>
+    );
+  }
 
   if (!material && materialQuery.hydrated) {
     if (materialError) {
@@ -206,6 +217,7 @@ export default function MaterialDetailPage() {
       </LayoutShell>
     );
   }
+
 
   if (!material) {
     return (
