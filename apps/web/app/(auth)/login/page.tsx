@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/lib/api";
+import { loginErrorMessage } from "@/lib/auth-errors";
 import { useSession } from "@/lib/session";
 
 export default function LoginPage() {
@@ -18,14 +19,14 @@ export default function LoginPage() {
     setError(null);
     setLoadingLabel(label);
     try {
-      const response = await apiFetch<{ access_token: string; user: AuthUser }>("/auth/login", {
+      const response = await apiFetch<{ accessToken: string; user: AuthUser }>("/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials)
       });
-      setSession(response.access_token, response.user);
+      setSession(response.accessToken, response.user);
       router.push("/dashboard");
     } catch (nextError) {
-      setError((nextError as Error).message);
+      setError(loginErrorMessage(nextError));
     } finally {
       setLoadingLabel(null);
     }

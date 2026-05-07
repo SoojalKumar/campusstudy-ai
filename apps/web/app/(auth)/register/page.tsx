@@ -41,11 +41,11 @@ export default function RegisterPage() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      const response = await apiFetch<{ access_token: string; user: any }>("/auth/register", {
+      const response = await apiFetch<{ accessToken: string; user: any }>("/auth/register", {
         method: "POST",
         body: JSON.stringify(form)
       });
-      setSession(response.access_token, response.user);
+      setSession(response.accessToken, response.user);
       router.push("/dashboard");
     } catch (nextError) {
       setError((nextError as Error).message);
