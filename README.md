@@ -141,8 +141,13 @@ make api-worker
 ### 7. Run web
 
 ```bash
-pnpm --filter @campusstudy/web dev
+cd apps/web
+cp .env.example .env.local
+cd ../..
+pnpm --filter @campusstudy/web dev --hostname 127.0.0.1 --port 3001
 ```
+
+The web default local API is `http://127.0.0.1:8020/api/v1`. If you use another API port, update `apps/web/.env.local` before starting Next.js.
 
 ### 8. Run mobile
 
@@ -250,17 +255,29 @@ CI:
 - GitHub Actions runs backend lint + pytest and web lint + test + build on every push to `main` and on pull requests.
 - Local `make preflight` is the fastest way to catch missing dependencies before pushing.
 
-## Local smoke flow
+## Local browser demo flow
 
-1. Start the API, worker, and web app.
-2. Run `make seed`.
-3. Open `http://localhost:3000/login`.
-4. Sign in with one of the local development accounts above.
-5. Open Dashboard, then use `Study Packs` to jump into an API-backed flashcard deck and quiz set.
-6. Start a source-grounded chat from Dashboard or the Study tab, ask a question, and inspect citations from uploaded chunks.
-7. Open a material detail page and use `Generate revision notes`, `Generate flashcard deck`, or `Generate quiz set`.
-8. Run the Expo mobile app, sign in, then open the Study tab for synced deck/quiz/chat entry points.
-9. Sign in as the local admin account to inspect metrics, users, uploads, and processing jobs.
+Use this path when you want the product to work in a real browser without `failed to fetch` surprises.
+
+1. Start infrastructure if you are using Postgres/Redis/MinIO locally: `docker compose -f infrastructure/docker-compose.yml up postgres redis minio minio-init`.
+2. Start the API on the local demo port: `cd apps/api && source .venv/bin/activate && uvicorn app.main:app --host 127.0.0.1 --port 8020`.
+3. In another shell, run migrations and seed data if needed: `make migrate && make seed`.
+4. Start the worker when testing uploads or pilot smoke: `make api-worker`.
+5. Start web with the matching API URL: `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8020/api/v1 pnpm --filter @campusstudy/web dev --hostname 127.0.0.1 --port 3001`.
+6. Open `http://127.0.0.1:3001/login`.
+7. Sign in as `maya@student.pacific.edu` / `StudentPass123!`.
+8. On Dashboard, use `Recommended demo path` to open the seeded material, latest notes, flashcards, and quiz.
+9. Open the material detail page and confirm the completed processing copy says `Study pack ready`.
+10. Sign in as the admin account to inspect metrics, users, uploads, and processing jobs.
+
+Common local fixes:
+
+- `Failed to fetch` on login: make sure the API is running at the URL compiled into web, usually `http://127.0.0.1:8020/api/v1`. Restart Next.js after changing `NEXT_PUBLIC_API_BASE_URL`.
+- CORS error: use `http://127.0.0.1:3001` or `http://localhost:3001`; both are allowed by default in development. If you choose another web port, add it to `CORS_ORIGINS`.
+- Wrong API URL: update `apps/web/.env.local` from `apps/web/.env.example`, then restart `pnpm --filter @campusstudy/web dev`.
+- Worker not processing uploads: run `make api-worker` from the same checkout and environment as the API, and keep Redis pointed at the same broker URL.
+- Web port changed from 3000 to 3001: open `http://127.0.0.1:3001/login` and make sure the API CORS list includes that origin.
+- Next.js dev overlay after running build: stop `next dev`, remove `apps/web/.next`, then restart dev. Avoid running `next build` while `next dev` is serving the same workspace.
 
 You can smoke-test the same flow through the API:
 
