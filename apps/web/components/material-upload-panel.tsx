@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { CourseSummary } from "@campusstudy/types";
 
-import { apiFetch } from "@/lib/api";
+import { apiErrorMessage, apiFetch } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { UploadDropzone } from "@/components/upload-dropzone";
 
@@ -90,7 +90,7 @@ export function MaterialUploadPanel({ courses }: MaterialUploadPanelProps) {
         </button>
       </div>
       {uploadMutation.error ? (
-        <p className="text-sm text-rose-300">{(uploadMutation.error as Error).message}</p>
+        <p className="text-sm text-rose-300">{apiErrorMessage(uploadMutation.error)}</p>
       ) : null}
       {uploadMutation.isSuccess ? (
         <p className="text-sm text-tide">Upload queued successfully. Refresh or open the material later.</p>

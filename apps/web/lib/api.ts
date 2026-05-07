@@ -35,6 +35,18 @@ export function isApiConnectionError(error: unknown): error is ApiConnectionErro
   return error instanceof ApiConnectionError;
 }
 
+export function apiErrorMessage(error: unknown, fallback = "Request failed. Please try again.") {
+  if (isApiConnectionError(error)) {
+    return API_UNREACHABLE_MESSAGE;
+  }
+
+  if (error instanceof ApiError && error.status === 401) {
+    return "Your session expired. Sign in again to continue.";
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit & { token?: string | null } = {}

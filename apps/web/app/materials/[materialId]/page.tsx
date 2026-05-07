@@ -10,7 +10,7 @@ import { useState } from "react";
 import { LayoutShell } from "@/components/layout-shell";
 import { SourceFileActions, SourceTimestampButton } from "@/components/source-file-actions";
 import { SourceCitationCard } from "@/components/source-citation-card";
-import { apiFetch } from "@/lib/api";
+import { apiErrorMessage, apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
 import { canUseProcessedMaterial, materialRecoveryCopy } from "@/lib/material-status";
 import { useSession } from "@/lib/session";
@@ -171,8 +171,24 @@ export default function MaterialDetailPage() {
   const supportsTimestampLinks = material?.mimeType.startsWith("audio/") || material?.mimeType.startsWith("video/");
   const activeTimelineIndex = processingTimeline.indexOf((material?.processingStage as (typeof processingTimeline)[number]) ?? "uploaded");
   const recoveryCopy = material ? materialRecoveryCopy(material) : null;
+  const materialError = materialQuery.error || notesQuery.error || transcriptQuery.error || chunksQuery.error;
 
   if (!material && materialQuery.hydrated) {
+    if (materialError) {
+      return (
+        <LayoutShell>
+          <div className="rounded-[2.5rem] border border-ember/25 bg-ember/10 p-8">
+            <p className="text-xs uppercase tracking-[0.35em] text-ember">Material Detail</p>
+            <h1 className="mt-3 text-3xl font-semibold text-white">Material could not load</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">{apiErrorMessage(materialError)}</p>
+            <Link className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950" href="/dashboard">
+              Back to dashboard
+            </Link>
+          </div>
+        </LayoutShell>
+      );
+    }
+
     return (
       <LayoutShell>
         <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
@@ -378,10 +394,7 @@ export default function MaterialDetailPage() {
             ) : null}
             {noteMutation.isError || deckMutation.isError || quizMutation.isError || sourceChatMutation.isError ? (
               <p className="mt-4 text-sm text-ember">
-                {(noteMutation.error as Error | null)?.message ||
-                  (deckMutation.error as Error | null)?.message ||
-                  (quizMutation.error as Error | null)?.message ||
-                  (sourceChatMutation.error as Error | null)?.message}
+                {apiErrorMessage(noteMutation.error || deckMutation.error || quizMutation.error || sourceChatMutation.error)}
               </p>
             ) : null}
           </div>

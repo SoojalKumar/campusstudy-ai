@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 import { LayoutShell } from "@/components/layout-shell";
 import { MaterialUploadPanel } from "@/components/material-upload-panel";
-import { apiFetch } from "@/lib/api";
+import { apiErrorMessage, apiFetch } from "@/lib/api";
 import { useAuthedQuery } from "@/lib/api-hooks";
 import { useSession } from "@/lib/session";
 
@@ -55,6 +55,9 @@ export default function DashboardPage() {
   const latestQuiz = quizzesQuery.data?.[0];
   const needsSignIn = dashboardQuery.hydrated && !dashboardQuery.hasSession;
   const isLoading = dashboardQuery.hasSession && dashboardQuery.isLoading;
+  const workspaceError = dashboardQuery.error || coursesQuery.error || decksQuery.error || quizzesQuery.error;
+  const firstUpload = dashboard?.recentUploads[0];
+  const firstNote = dashboard?.latestNotes[0];
 
   return (
     <LayoutShell>
@@ -77,6 +80,13 @@ export default function DashboardPage() {
             </div>
           ) : null}
           {isLoading ? <p className="mt-5 text-sm text-slate-400">Loading your dashboard...</p> : null}
+          {workspaceError ? (
+            <div className="mt-5 rounded-3xl border border-ember/25 bg-ember/10 p-5">
+              <p className="font-semibold text-white">Workspace could not load.</p>
+              <p className="mt-2 text-sm text-slate-300">{apiErrorMessage(workspaceError)}</p>
+              <p className="mt-2 text-xs text-slate-500">Check that the API is running at the configured local URL, then refresh this page.</p>
+            </div>
+          ) : null}
           {dashboard ? (
             <div className="mt-6 grid gap-4 md:grid-cols-4">
               <MetricCard label="Streak" value={`${dashboard.streakDays} days`} helper="Consistency score is rising." />
@@ -90,6 +100,39 @@ export default function DashboardPage() {
             </div>
           ) : null}
         </section>
+
+        {dashboard ? (
+          <section className="rounded-[2rem] border border-tide/20 bg-tide/10 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-tide">Start here</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Recommended demo path</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              {firstUpload ? (
+                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/40" href={`/materials/${firstUpload.id}`}>
+                  <p className="text-sm font-semibold text-white">Open material</p>
+                  <p className="mt-1 text-xs text-slate-400">Check processing status and generated outputs.</p>
+                </Link>
+              ) : null}
+              {firstNote ? (
+                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-gold/40" href={`/notes/${firstNote.id}`}>
+                  <p className="text-sm font-semibold text-white">Read latest notes</p>
+                  <p className="mt-1 text-xs text-slate-400">Preview the generated study library.</p>
+                </Link>
+              ) : null}
+              {latestDeck ? (
+                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/40" href={`/flashcards/${latestDeck.id}`}>
+                  <p className="text-sm font-semibold text-white">Review cards</p>
+                  <p className="mt-1 text-xs text-slate-400">Run the spaced-repetition loop.</p>
+                </Link>
+              ) : null}
+              {latestQuiz ? (
+                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-gold/40" href={`/quizzes/${latestQuiz.id}`}>
+                  <p className="text-sm font-semibold text-white">Take quiz</p>
+                  <p className="mt-1 text-xs text-slate-400">Verify scoring and weak-topic feedback.</p>
+                </Link>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <SectionCard title="Upload Materials" eyebrow="Pipeline">
@@ -136,7 +179,7 @@ export default function DashboardPage() {
                   {createChatMutation.isPending ? "Starting chat..." : "Open source-grounded chat"}
                 </button>
                 {createChatMutation.isError ? (
-                  <p className="text-sm text-rose-200">{(createChatMutation.error as Error).message}</p>
+                  <p className="text-sm text-rose-200">{apiErrorMessage(createChatMutation.error)}</p>
                 ) : null}
               </div>
             </SectionCard>

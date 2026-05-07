@@ -14,7 +14,7 @@ describe("web API client", () => {
     expect(getApiBaseUrl(" http://localhost:9000/api/v1/// ")).toBe("http://localhost:9000/api/v1");
   });
 
-  it("turns browser fetch failures into a clear API reachability error", async () => {
+  it("formats browser fetch failures into a clear API reachability error", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
 
     try {
