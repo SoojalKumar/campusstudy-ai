@@ -276,18 +276,52 @@ Common local fixes:
 - CORS error: use `http://127.0.0.1:3001` or `http://localhost:3001`; both are allowed by default in development. If you choose another web port, add it to `CORS_ORIGINS`.
 - Wrong API URL: update `apps/web/.env.local` from `apps/web/.env.example`, then restart `pnpm --filter @campusstudy/web dev`.
 - Worker not processing uploads: run `make api-worker` from the same checkout and environment as the API, and keep Redis pointed at the same broker URL.
+- Worker is connected but uploads stay pending: confirm the worker boot log lists `app.workers.tasks.process_material_pipeline` under `[tasks]`, then upload again and look for `Task app.workers.tasks.process_material_pipeline received` followed by `succeeded`.
 - Web port changed from 3000 to 3001: open `http://127.0.0.1:3001/login` and make sure the API CORS list includes that origin.
 - Next.js dev overlay after running build: stop `next dev`, remove `apps/web/.next`, then restart dev. Avoid running `next build` while `next dev` is serving the same workspace.
 
 You can smoke-test the same flow through the API:
 
 ```bash
-make pilot-smoke
-# For a non-default API process:
-API_BASE_URL=http://127.0.0.1:8010/api/v1 make pilot-smoke
+# Terminal 1: API
+cd apps/api
+source .venv/bin/activate
+uvicorn app.main:app --host 127.0.0.1 --port 8020
+
+# Terminal 2: worker
+make api-worker
+
+# Terminal 3: smoke
+API_BASE_URL=http://127.0.0.1:8020/api/v1 make pilot-smoke
 ```
 
 The smoke test logs in with local student and admin fixtures, checks dashboard/material/deck/quiz endpoints, creates a strict-source RAG thread, uploads a fresh text source, waits for processing, verifies generated study assets, and checks citations for the uploaded material. Keep the API and Celery worker pointed at the same checkout/environment or the uploaded source will remain pending.
+
+If Docker/Redis is unavailable and you still need a fully local worker-backed demo, use a throwaway SQLite smoke environment from the repo root:
+
+```bash
+rm -rf /tmp/campusstudy-worker-smoke
+mkdir -p /tmp/campusstudy-worker-smoke/uploads
+
+export DATABASE_URL=sqlite:////tmp/campusstudy-worker-smoke/campusstudy.db
+export CELERY_BROKER_URL=sqla+sqlite:////tmp/campusstudy-worker-smoke/celery-broker.db
+export CELERY_RESULT_BACKEND=db+sqlite:////tmp/campusstudy-worker-smoke/celery-results.db
+export FILE_STORAGE_BACKEND=local
+export LOCAL_STORAGE_PATH=/tmp/campusstudy-worker-smoke/uploads
+export ENABLE_MOCK_AI=true
+export LLM_PROVIDER=mock
+
+cd apps/api
+python -m app.seed.run
+uvicorn app.main:app --host 127.0.0.1 --port 8020
+
+# In another shell with the same exported env values:
+cd apps/api
+celery -A app.workers.celery_app.celery_app worker --loglevel=INFO --pool=solo
+
+# In a third shell from the repo root with the same exported env values:
+API_BASE_URL=http://127.0.0.1:8020/api/v1 python scripts/pilot_smoke.py
+```
 
 ## Known limitations
 
