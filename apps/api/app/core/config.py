@@ -47,7 +47,13 @@ class Settings(BaseSettings):
     stt_provider: Literal["mock"] = "mock"
 
     cors_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "http://localhost:19006"]
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+            "http://localhost:19006",
+        ]
     )
     environment: Literal["development", "test", "production"] = "development"
     request_id_header: str = "X-Request-ID"

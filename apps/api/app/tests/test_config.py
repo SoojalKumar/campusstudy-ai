@@ -50,3 +50,12 @@ def test_development_keeps_local_mock_defaults_easy():
     settings = Settings(environment="development", secret_key="change-me", enable_mock_ai=True)
 
     settings.validate_production_ready()
+
+
+def test_development_cors_allows_common_local_web_origins():
+    settings = Settings(environment="development")
+
+    assert "http://localhost:3000" in settings.cors_origins
+    assert "http://localhost:3001" in settings.cors_origins
+    assert "http://127.0.0.1:3000" in settings.cors_origins
+    assert "http://127.0.0.1:3001" in settings.cors_origins
