@@ -10,15 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0d1321",
-        mist: "#eef4ff",
-        tide: "#73c9c7",
-        ember: "#ff8b5d",
-        gold: "#f6c66f"
+        ink: "#172033",
+        mist: "#f6f3ec",
+        tide: "#315c72",
+        ember: "#b85d42",
+        gold: "#9f6f2c"
       },
       backgroundImage: {
         "study-grid":
-          "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)"
+          "linear-gradient(rgba(23,32,51,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(23,32,51,0.05) 1px, transparent 1px)"
       }
     }
   },
@@ -26,4 +26,3 @@ const config: Config = {
 };
 
 export default config;
-

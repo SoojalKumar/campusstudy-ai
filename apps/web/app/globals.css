@@ -3,13 +3,25 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  --bg: #081019;
-  --panel: rgba(9, 18, 32, 0.78);
-  --panel-strong: rgba(12, 22, 38, 0.96);
-  --line: rgba(255, 255, 255, 0.08);
-  --text: #f4f7fb;
-  --muted: #a6b4c9;
+  color-scheme: light;
+  --bg: #f6f3ec;
+  --panel: #fffdf8;
+  --panel-strong: #ffffff;
+  --panel-muted: #f0ebe2;
+  --line: #ded7ca;
+  --line-strong: #cbc1b3;
+  --text: #172033;
+  --muted: #677284;
+  --accent: #315c72;
+  --accent-strong: #1f465d;
+  --accent-soft: #e5eef1;
+  --gold: #9f6f2c;
+  --gold-soft: #f5ead4;
+  --ember: #b85d42;
+  --ember-soft: #f7e6df;
+  --success: #55745f;
+  --success-soft: #e4ede6;
+  --shadow-soft: 0 24px 70px rgba(23, 32, 51, 0.09);
 }
 
 * {
@@ -24,12 +36,12 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(255, 139, 93, 0.26), transparent 32%),
-    radial-gradient(circle at top right, rgba(115, 201, 199, 0.22), transparent 28%),
-    linear-gradient(160deg, #06111d 0%, #0d1321 52%, #132238 100%);
+    radial-gradient(circle at top left, rgba(159, 111, 44, 0.13), transparent 30%),
+    radial-gradient(circle at top right, rgba(49, 92, 114, 0.12), transparent 30%),
+    linear-gradient(180deg, #fbfaf7 0%, var(--bg) 52%, #efe9df 100%);
   background-size: cover;
   color: var(--text);
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-family: "Newsreader", "Iowan Old Style", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 a {
@@ -38,8 +50,110 @@ a {
 }
 
 .app-shell {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(49, 92, 114, 0.08), transparent 26rem),
+    radial-gradient(circle at 85% 12%, rgba(159, 111, 44, 0.09), transparent 22rem);
 }
 
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(49, 92, 114, 0.32);
+  outline-offset: 3px;
+}
+
+.cs-card {
+  border: 1px solid var(--line);
+  border-radius: 1.75rem;
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.cs-card-muted {
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: color-mix(in srgb, var(--panel-muted) 72%, white);
+}
+
+.cs-eyebrow {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.cs-button-primary,
+.cs-button-secondary,
+.cs-input {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.cs-button-primary {
+  border-radius: 1rem;
+  background: var(--accent-strong);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(31, 70, 93, 0.18);
+}
+
+.cs-button-primary:hover {
+  background: #17394f;
+  transform: translateY(-1px);
+}
+
+.cs-button-secondary {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.cs-button-secondary:hover {
+  border-color: var(--line-strong);
+  background: #ffffff;
+}
+
+.cs-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+}
+
+.cs-input::placeholder {
+  color: #8c96a7;
+}
+
+.cs-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(49, 92, 114, 0.12);
+  outline: none;
+}
+
+.cs-status-pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
