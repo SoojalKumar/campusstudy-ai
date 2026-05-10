@@ -251,6 +251,14 @@ GROQ_API_KEY=your-groq-key
 GROQ_MODEL=llama-3.1-8b-instant
 ```
 
+The API Docker image starts with:
+
+```bash
+python -m app.deployment && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+
+That startup path runs Alembic migrations, seeds the demo accounts/courses idempotently, and then starts Uvicorn. If Render uses a manual start command instead of the Docker `CMD`, use the same command above.
+
 Vercel frontend example:
 
 ```env

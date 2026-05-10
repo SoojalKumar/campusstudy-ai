@@ -20,4 +20,4 @@ COPY alembic.ini /app/alembic.ini
 
 RUN pip install --upgrade pip && pip install -e ".[dev]"
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/bin/sh", "-c", "python -m app.deployment && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
