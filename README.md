@@ -62,6 +62,7 @@ Important values:
 - `CELERY_RESULT_BACKEND`
 - `SECRET_KEY`
 - `ALLOWED_EMAIL_DOMAINS`
+- `BACKEND_CORS_ORIGINS`
 - `FILE_STORAGE_BACKEND`
 - `S3_ENDPOINT_URL`
 - `S3_ACCESS_KEY`
@@ -256,6 +257,12 @@ Vercel frontend example:
 NEXT_PUBLIC_API_BASE_URL=https://campusstudy-ai.onrender.com/api/v1
 ```
 
+Render CORS value for the Vercel frontend:
+
+```env
+BACKEND_CORS_ORIGINS=https://campusstudy-ai-web.vercel.app,https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app
+```
+
 If a private pilot deliberately needs mock AI in production, set:
 
 ```env
@@ -303,7 +310,7 @@ Use this path when you want the product to work in a real browser without `faile
 Common local fixes:
 
 - `Failed to fetch` on login: make sure the API is running at the URL compiled into web, usually `http://127.0.0.1:8020/api/v1`. Restart Next.js after changing `NEXT_PUBLIC_API_BASE_URL`.
-- CORS error: use `http://127.0.0.1:3001` or `http://localhost:3001`; both are allowed by default in development. If you choose another web port, add it to `CORS_ORIGINS`.
+- CORS error: use `http://127.0.0.1:3001` or `http://localhost:3001`; both are allowed by default in development. On Render, set `BACKEND_CORS_ORIGINS` to a comma-separated string or JSON list of allowed frontend origins.
 - Wrong API URL: update `apps/web/.env.local` from `apps/web/.env.example`, then restart `pnpm --filter @campusstudy/web dev`.
 - Worker not processing uploads: run `make api-worker` from the same checkout and environment as the API, and keep Redis pointed at the same broker URL.
 - Worker is connected but uploads stay pending: confirm the worker boot log lists `app.workers.tasks.process_material_pipeline` under `[tasks]`, then upload again and look for `Task app.workers.tasks.process_material_pipeline received` followed by `succeeded`.

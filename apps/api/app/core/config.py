@@ -1,7 +1,9 @@
+import json
 from functools import lru_cache
 from typing import Literal
 
 from pydantic import Field
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,12 +56,21 @@ class Settings(BaseSettings):
             "http://localhost:3001",
             "http://127.0.0.1:3000",
             "http://127.0.0.1:3001",
+            "https://campusstudy-ai-web.vercel.app",
+            "https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app",
             "http://localhost:19006",
         ]
     )
+    backend_cors_origins: str | list[str] | None = None
     environment: Literal["development", "test", "production"] = "development"
     request_id_header: str = "X-Request-ID"
     auto_create_schema: bool = False
+
+    @model_validator(mode="after")
+    def apply_backend_cors_origins(self):
+        if self.backend_cors_origins:
+            self.cors_origins = parse_cors_origins(self.backend_cors_origins)
+        return self
 
     @property
     def allowed_domains(self) -> set[str]:
@@ -84,3 +95,17 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def parse_cors_origins(value: str | list[str]) -> list[str]:
+    if isinstance(value, list):
+        return [origin.strip() for origin in value if origin.strip()]
+    configured = value.strip()
+    if not configured:
+        return []
+    if configured[0] in "[{":
+        parsed = json.loads(configured)
+        if not isinstance(parsed, list) or not all(isinstance(origin, str) for origin in parsed):
+            raise ValueError("BACKEND_CORS_ORIGINS JSON value must be a list of origin strings.")
+        return [origin.strip() for origin in parsed if origin.strip()]
+    return [origin.strip() for origin in configured.split(",") if origin.strip()]

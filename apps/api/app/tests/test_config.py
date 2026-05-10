@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.config import Settings
+from app.core.config import Settings, parse_cors_origins
 
 
 def test_production_rejects_unsafe_default_secret():
@@ -91,3 +91,53 @@ def test_development_cors_allows_common_local_web_origins():
     assert "http://localhost:3001" in settings.cors_origins
     assert "http://127.0.0.1:3000" in settings.cors_origins
     assert "http://127.0.0.1:3001" in settings.cors_origins
+    assert "https://campusstudy-ai-web.vercel.app" in settings.cors_origins
+    assert "https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app" in settings.cors_origins
+
+
+def test_backend_cors_origins_accepts_comma_separated_string():
+    settings = Settings(
+        backend_cors_origins=(
+            "https://campusstudy-ai-web.vercel.app,"
+            " https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app"
+        )
+    )
+
+    assert settings.cors_origins == [
+        "https://campusstudy-ai-web.vercel.app",
+        "https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app",
+    ]
+
+
+def test_backend_cors_origins_reads_render_env_var(monkeypatch):
+    monkeypatch.setenv(
+        "BACKEND_CORS_ORIGINS",
+        "https://campusstudy-ai-web.vercel.app,"
+        "https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app",
+    )
+
+    settings = Settings()
+
+    assert settings.cors_origins == [
+        "https://campusstudy-ai-web.vercel.app",
+        "https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app",
+    ]
+
+
+def test_backend_cors_origins_accepts_json_list_string():
+    settings = Settings(
+        backend_cors_origins=(
+            '["https://campusstudy-ai-web.vercel.app", '
+            '"https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app"]'
+        )
+    )
+
+    assert settings.cors_origins == [
+        "https://campusstudy-ai-web.vercel.app",
+        "https://campusstudy-ai-web-git-main-s-kumar18-6975s-projects.vercel.app",
+    ]
+
+
+def test_parse_cors_origins_rejects_invalid_json_shape():
+    with pytest.raises(ValueError, match="list of origin strings"):
+        parse_cors_origins('{"origin": "https://campusstudy-ai-web.vercel.app"}')
