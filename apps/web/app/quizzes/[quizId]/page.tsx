@@ -161,7 +161,7 @@ export default function QuizPage() {
                   </p>
                 </div>
                 <button
-                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)]"
+                  className="cs-button-secondary px-5 py-3 text-sm"
                   onClick={resetQuiz}
                   type="button"
                 >
@@ -241,7 +241,7 @@ export default function QuizPage() {
 
           <div className="mt-5 flex flex-wrap gap-3">
             <button
-              className="rounded-2xl border border-[var(--line)] bg-slate-50 px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="cs-button-secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-40"
               disabled={activeIndex === 0}
               onClick={() => setActiveIndex((value) => Math.max(0, value - 1))}
               type="button"
@@ -250,7 +250,7 @@ export default function QuizPage() {
             </button>
             {activeIndex < quiz.questions.length - 1 ? (
               <button
-                className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)]"
+                className="cs-button-primary px-5 py-3 text-sm"
                 onClick={() => setActiveIndex((value) => Math.min(quiz.questions.length - 1, value + 1))}
                 type="button"
               >
@@ -258,7 +258,7 @@ export default function QuizPage() {
               </button>
             ) : (
               <button
-                className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="cs-button-primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={!canSubmit || submitMutation.isPending}
                 onClick={finishQuiz}
                 type="button"

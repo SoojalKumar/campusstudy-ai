@@ -166,7 +166,7 @@ export default function FlashcardDeckPage() {
 
               {!revealed ? (
                 <button
-                  className="mt-4 w-full rounded-2xl bg-white px-5 py-4 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)]"
+                  className="cs-button-primary mt-4 w-full px-5 py-4 text-sm"
                   onClick={() => setRevealed(true)}
                   type="button"
                 >

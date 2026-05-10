@@ -43,7 +43,7 @@ export default function NoteDetailPage() {
           <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
             Generated notes are private to the workspace and source material that created them.
           </p>
-          <Link className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950" href="/login">
+          <Link className="cs-button-primary mt-6 inline-flex px-5 py-3 text-sm" href="/login">
             Sign in
           </Link>
         </div>

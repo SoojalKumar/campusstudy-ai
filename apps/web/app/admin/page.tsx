@@ -88,7 +88,7 @@ export default function AdminPage() {
                       </p>
                     </div>
                     <button
-                      className="rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+                      className="cs-button-secondary px-3 py-2 text-xs disabled:opacity-50"
                       disabled={retryMutation.isPending}
                       onClick={() => retryMutation.mutate(job.id)}
                       type="button"

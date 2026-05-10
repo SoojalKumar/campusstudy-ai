@@ -115,7 +115,7 @@ export default function CourseDetailPage() {
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="cs-button-primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!token || courseChatMutation.isPending}
               onClick={() => courseChatMutation.mutate()}
               type="button"

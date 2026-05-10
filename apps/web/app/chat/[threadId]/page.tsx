@@ -154,7 +154,7 @@ export default function ChatThreadPage() {
                   <h2 className="mt-2 text-2xl font-semibold text-ink">Create a live RAG thread.</h2>
                 </div>
                 <button
-                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="cs-button-primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={startDisabled}
                   onClick={() => createThreadMutation.mutate()}
                   type="button"
@@ -227,7 +227,7 @@ export default function ChatThreadPage() {
               <label className="mt-4 flex items-center gap-3 text-sm text-slate-600">
                 <input
                   checked={strictMode}
-                  className="size-4 accent-cyan-300"
+                  className="size-4 accent-tide"
                   onChange={(event) => setStrictMode(event.target.checked)}
                   type="checkbox"
                 />
@@ -286,7 +286,7 @@ export default function ChatThreadPage() {
                 {thread ? `${thread.answerStyle} mode` : "Start a thread before sending."}
               </p>
               <button
-                className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="cs-button-primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canSend || sendMutation.isPending}
                 type="submit"
               >
