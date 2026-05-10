@@ -34,10 +34,12 @@ class Settings(BaseSettings):
     s3_bucket: str = "campusstudy-ai"
     s3_region: str = "us-east-1"
 
-    llm_provider: Literal["mock", "meta_llama"] = "mock"
+    llm_provider: Literal["mock", "meta_llama", "groq"] = "mock"
     llama_api_base_url: str = "https://api.llama.com/compat/v1"
     llama_api_key: str | None = None
     llm_model: str = "llama-4-scout"
+    groq_api_key: str | None = None
+    groq_model: str = "llama-3.1-8b-instant"
     enable_mock_ai: bool = True
     allow_mock_ai_in_production: bool = False
 
@@ -73,6 +75,8 @@ class Settings(BaseSettings):
             errors.append("ENABLE_MOCK_AI must be false in production unless ALLOW_MOCK_AI_IN_PRODUCTION=true.")
         if self.llm_provider == "meta_llama" and not self.enable_mock_ai and not self.llama_api_key:
             errors.append("LLAMA_API_KEY is required when LLM_PROVIDER=meta_llama and mock AI is disabled.")
+        if self.llm_provider == "groq" and not self.enable_mock_ai and not self.groq_api_key:
+            errors.append("GROQ_API_KEY is required when LLM_PROVIDER=groq and mock AI is disabled.")
         if errors:
             raise RuntimeError("Production settings are not safe: " + " ".join(errors))
 
