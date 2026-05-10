@@ -54,8 +54,8 @@ export default function RegisterPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg items-center px-6 py-12">
-      <form onSubmit={onSubmit} className="w-full rounded-[2rem] border border-white/10 bg-[var(--panel)] p-8">
-        <h1 className="text-3xl font-semibold text-white">Create your study workspace</h1>
+      <form onSubmit={onSubmit} className="w-full rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-8">
+        <h1 className="text-3xl font-semibold text-ink">Create your study workspace</h1>
         <div className="mt-6 grid gap-4">
           {registerFields.map(({ key, placeholder, type = "text" }) => (
             <input
@@ -68,7 +68,7 @@ export default function RegisterPage() {
                   [key]: event.target.value
                 }))
               }
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white"
+              className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-ink"
               placeholder={placeholder}
             />
           ))}

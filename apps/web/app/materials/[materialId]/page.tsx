@@ -177,7 +177,7 @@ export default function MaterialDetailPage() {
   if (!material && materialLoading) {
     return (
       <LayoutShell>
-        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+        <div className="cs-card p-8 text-sm text-slate-600">
           Loading material...
         </div>
       </LayoutShell>
@@ -188,11 +188,11 @@ export default function MaterialDetailPage() {
     if (materialError) {
       return (
         <LayoutShell>
-          <div className="rounded-[2.5rem] border border-ember/25 bg-ember/10 p-8">
-            <p className="text-xs uppercase tracking-[0.35em] text-ember">Material Detail</p>
-            <h1 className="mt-3 text-3xl font-semibold text-white">Material could not load</h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">{apiErrorMessage(materialError)}</p>
-            <Link className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950" href="/dashboard">
+          <div className="rounded-[2rem] border border-ember/25 bg-[var(--ember-soft)] p-8">
+            <p className="cs-eyebrow text-ember">Material detail</p>
+            <h1 className="mt-3 text-3xl font-semibold text-ink">Material could not load</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-700">{apiErrorMessage(materialError)}</p>
+            <Link className="cs-button-primary mt-6 inline-flex px-5 py-3 text-sm" href="/dashboard">
               Back to dashboard
             </Link>
           </div>
@@ -202,15 +202,15 @@ export default function MaterialDetailPage() {
 
     return (
       <LayoutShell>
-        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
-          <p className="text-xs uppercase tracking-[0.35em] text-gold">Material Detail</p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">
+        <div className="cs-card p-8">
+          <p className="cs-eyebrow text-gold">Material detail</p>
+          <h1 className="mt-3 text-3xl font-semibold text-ink">
             {materialQuery.hasSession ? "Material not found" : "Sign in to view this material"}
           </h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
             Materials are private to the student workspace that uploaded them.
           </p>
-          <Link className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950" href="/login">
+          <Link className="cs-button-primary mt-6 inline-flex px-5 py-3 text-sm" href="/login">
             Sign in
           </Link>
         </div>
@@ -222,7 +222,7 @@ export default function MaterialDetailPage() {
   if (!material) {
     return (
       <LayoutShell>
-        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+        <div className="cs-card p-8 text-sm text-slate-600">
           Loading material...
         </div>
       </LayoutShell>
@@ -232,22 +232,22 @@ export default function MaterialDetailPage() {
   return (
     <LayoutShell>
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-6">
-          <p className="text-xs uppercase tracking-[0.35em] text-gold">Material Detail</p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">{material.title}</h1>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-300">
-            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">{material.fileName}</span>
-            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">{material.mimeType}</span>
-            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">
+        <section className="cs-card p-6 md:p-8">
+          <p className="cs-eyebrow text-gold">Material detail</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-ink">{material.title}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <span className="cs-status-pill px-3 py-1">{material.fileName}</span>
+            <span className="cs-status-pill px-3 py-1">{material.mimeType}</span>
+            <span className="cs-status-pill px-3 py-1">
               Stage: {material.processingStage}
             </span>
-            <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1">
+            <span className="cs-status-pill px-3 py-1">
               Status: {material.processingStatus}
             </span>
           </div>
           <SourceFileActions downloadUrl={material.downloadUrl} fileName={material.fileName} />
-          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
-            <h2 className="text-lg font-semibold text-white">Processing timeline</h2>
+          <div className="mt-6 rounded-[2rem] border border-[var(--line)] bg-white p-5">
+            <h2 className="text-lg font-semibold text-ink">Processing timeline</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               {processingTimeline.map((stage, index) => {
                 const isActive = stage === material.processingStage;
@@ -257,14 +257,14 @@ export default function MaterialDetailPage() {
                     key={stage}
                     className={`rounded-2xl border p-4 transition ${
                       isActive
-                        ? "border-tide/40 bg-tide/10"
+                        ? "border-tide/40 bg-[var(--accent-soft)]"
                         : isComplete
-                          ? "border-gold/25 bg-gold/10"
-                          : "border-white/10 bg-white/[0.03]"
+                          ? "border-gold/25 bg-[var(--gold-soft)]"
+                          : "border-[var(--line)] bg-slate-50"
                     }`}
                   >
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{index + 1}</p>
-                    <p className={`mt-2 text-sm font-semibold ${isActive ? "text-tide" : isComplete ? "text-gold" : "text-slate-200"}`}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{index + 1}</p>
+                    <p className={`mt-2 text-sm font-semibold ${isActive ? "text-tide" : isComplete ? "text-gold" : "text-slate-600"}`}>
                       {formatNoteTypeLabel(stage)}
                     </p>
                   </div>
@@ -275,25 +275,25 @@ export default function MaterialDetailPage() {
               <div
                 className={`mt-4 rounded-2xl border px-4 py-3 ${
                   recoveryCopy.tone === "failed"
-                    ? "border-ember/30 bg-ember/10"
+                    ? "border-ember/30 bg-[var(--ember-soft)]"
                     : recoveryCopy.tone === "completed"
-                      ? "border-tide/30 bg-tide/10"
-                      : "border-gold/25 bg-gold/10"
+                      ? "border-green-200 bg-green-50"
+                      : "border-gold/25 bg-[var(--gold-soft)]"
                 }`}
               >
-                <p className="text-sm font-semibold text-white">{recoveryCopy.title}</p>
-                <p className="mt-1 text-sm text-slate-400">{recoveryCopy.body}</p>
+                <p className="text-sm font-semibold text-ink">{recoveryCopy.title}</p>
+                <p className="mt-1 text-sm text-slate-600">{recoveryCopy.body}</p>
               </div>
             ) : null}
           </div>
-          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
-            <h2 className="text-lg font-semibold text-white">Transcript timeline</h2>
+          <div className="mt-6 rounded-[2rem] border border-[var(--line)] bg-white p-5">
+            <h2 className="text-lg font-semibold text-ink">Transcript timeline</h2>
             <div className="mt-4 space-y-3">
               {transcriptSegments.length ? (
                 transcriptSegments.map((segment) => (
-                  <div key={segment.id} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-300">
+                  <div key={segment.id} className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-slate-700">
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gold">
+                      <span className="rounded-full bg-[var(--gold-soft)] px-3 py-1 text-xs font-semibold text-gold">
                         {formatSeconds(segment.startSecond)} - {formatSeconds(segment.endSecond)}
                       </span>
                       {supportsTimestampLinks && material.downloadUrl ? (
@@ -308,15 +308,15 @@ export default function MaterialDetailPage() {
                   </div>
                 ))
               ) : (
-                <div className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-400">
+                <div className="rounded-2xl border border-[var(--line)] bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   No transcript segments yet. For documents, chunk citations will still appear on the right.
                 </div>
               )}
             </div>
           </div>
-          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
-            <h2 className="text-lg font-semibold text-white">Extracted source text</h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">
+          <div className="mt-6 rounded-[2rem] border border-[var(--line)] bg-white p-5">
+            <h2 className="text-lg font-semibold text-ink">Extracted source text</h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">
               {sourcePreviewText
                 ? `${sourcePreviewText.slice(0, 1600)}${sourcePreviewText.length > 1600 ? "..." : ""}`
                 : "The source preview will appear here after extraction or transcription completes."}
@@ -324,14 +324,14 @@ export default function MaterialDetailPage() {
           </div>
         </section>
         <aside className="grid gap-6">
-          <div className="rounded-[2rem] border border-cyan-200/15 bg-[var(--panel)] p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-tide">Generate Study Pack</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">Turn this source into action</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
+          <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-soft)]">
+            <p className="cs-eyebrow">Generate study pack</p>
+            <h2 className="mt-2 text-xl font-semibold text-ink">Turn this source into action</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               Create fresh notes, due-card decks, and a scored quiz directly from this material.
             </p>
             <div className="mt-5 grid gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Note mode</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Note mode</p>
               <div className="grid gap-2">
                 {noteGenerationModes.map((mode) => {
                   const selected = mode.value === selectedNoteType;
@@ -340,14 +340,14 @@ export default function MaterialDetailPage() {
                       key={mode.value}
                       className={`rounded-2xl border px-4 py-3 text-left transition ${
                         selected
-                          ? "border-tide/40 bg-tide/10"
-                          : "border-white/10 bg-slate-950/55 hover:border-white/20"
+                          ? "border-tide/40 bg-[var(--accent-soft)]"
+                          : "border-[var(--line)] bg-white hover:border-tide/30"
                       }`}
                       onClick={() => setSelectedNoteType(mode.value)}
                       type="button"
                     >
-                      <p className={`text-sm font-semibold ${selected ? "text-tide" : "text-white"}`}>{mode.label}</p>
-                      <p className="mt-1 text-xs text-slate-400">{mode.helper}</p>
+                      <p className={`text-sm font-semibold ${selected ? "text-tide" : "text-ink"}`}>{mode.label}</p>
+                      <p className="mt-1 text-xs text-slate-500">{mode.helper}</p>
                     </button>
                   );
                 })}
@@ -355,28 +355,28 @@ export default function MaterialDetailPage() {
             </div>
             <div className="mt-5 grid gap-3">
               <button
-                className="rounded-2xl border border-gold/20 bg-gold/10 px-4 py-3 text-left text-sm font-semibold text-gold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl border border-gold/25 bg-[var(--gold-soft)] px-4 py-3 text-left text-sm font-semibold text-gold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canChat || sourceChatMutation.isPending}
                 onClick={() => sourceChatMutation.mutate()}
               >
                 {sourceChatMutation.isPending ? "Opening source chat..." : "Ask this source in chat"}
               </button>
               <button
-                className="rounded-2xl border border-white/10 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="cs-button-primary px-4 py-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canGenerate || noteMutation.isPending}
                 onClick={() => noteMutation.mutate()}
               >
                 {noteMutation.isPending ? `Generating ${formatNoteTypeLabel(selectedNoteType)}...` : `Generate ${formatNoteTypeLabel(selectedNoteType)}`}
               </button>
               <button
-                className="rounded-2xl border border-white/10 bg-tide/90 px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl border border-tide/20 bg-[var(--accent-soft)] px-4 py-3 text-left text-sm font-semibold text-tide transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canGenerate || deckMutation.isPending}
                 onClick={() => deckMutation.mutate()}
               >
                 {deckMutation.isPending ? "Building flashcards..." : "Generate flashcard deck"}
               </button>
               <button
-                className="rounded-2xl border border-white/10 bg-gold/90 px-4 py-3 text-left text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl border border-gold/25 bg-[var(--gold-soft)] px-4 py-3 text-left text-sm font-semibold text-gold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canGenerate || quizMutation.isPending}
                 onClick={() => quizMutation.mutate()}
               >
@@ -384,12 +384,12 @@ export default function MaterialDetailPage() {
               </button>
             </div>
             {!canGenerate ? (
-              <p className="mt-4 text-xs text-slate-500">
+              <p className="mt-4 text-xs leading-5 text-slate-500">
                 Sign in and wait for processing to complete before generating new study outputs.
               </p>
             ) : null}
             {canGenerate ? (
-              <p className="mt-4 text-xs text-slate-500">
+              <p className="mt-4 text-xs leading-5 text-slate-500">
                 Source chat stays in strict citation mode so answers remain grounded in this exact uploaded material.
               </p>
             ) : null}
@@ -410,9 +410,9 @@ export default function MaterialDetailPage() {
               </p>
             ) : null}
           </div>
-          <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
-            <h2 className="text-xl font-semibold text-white">Note outputs</h2>
-            <ul className="mt-4 space-y-2 text-sm text-slate-300">
+          <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-ink">Note outputs</h2>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
               {notes.length ? (
                 notes.map((note) => (
                   <li key={note.id}>
@@ -426,7 +426,7 @@ export default function MaterialDetailPage() {
               )}
             </ul>
             {generatedNoteId ? (
-              <Link className="mt-4 block text-sm font-semibold text-white" href={`/notes/${generatedNoteId}`}>
+              <Link className="mt-4 block text-sm font-semibold text-tide" href={`/notes/${generatedNoteId}`}>
                 Open generated note
               </Link>
             ) : null}
@@ -435,7 +435,7 @@ export default function MaterialDetailPage() {
             {citations.length ? (
               citations.map((citation) => <SourceCitationCard key={citation.chunkId} citation={citation} />)
             ) : (
-              <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5 text-sm text-slate-400">
+              <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5 text-sm text-slate-600">
                 Source citations will appear here once chunked text is available.
               </div>
             )}

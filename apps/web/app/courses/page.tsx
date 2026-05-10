@@ -17,9 +17,11 @@ export default function CoursesPage() {
   return (
     <LayoutShell>
       <div className="grid gap-6">
-        <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-6">
-          <p className="text-xs uppercase tracking-[0.35em] text-gold">Courses</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Organize work by semester, course, and topic.</h1>
+        <section className="cs-card p-6 md:p-8">
+          <p className="cs-eyebrow text-gold">Courses</p>
+          <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.03em] text-ink">
+            Organize work by semester, course, and topic.
+          </h1>
           {!coursesQuery.hasSession && coursesQuery.hydrated ? (
             <p className="mt-4 text-sm text-gold">Sign in to see your enrolled courses and course materials.</p>
           ) : null}
@@ -31,12 +33,12 @@ export default function CoursesPage() {
                 <Link
                   href={`/courses/${course.id}`}
                   key={course.id}
-                  className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5"
+                  className="rounded-[1.75rem] border border-[var(--line)] bg-white p-5 transition hover:-translate-y-0.5 hover:border-tide/30 hover:shadow-sm"
                 >
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{course.code}</p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">{course.title}</h2>
-                  <p className="mt-3 text-sm text-slate-300">{course.departmentName}</p>
-                  <div className="mt-4 flex gap-3 text-sm text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{course.code}</p>
+                  <h2 className="mt-2 text-xl font-semibold text-ink">{course.title}</h2>
+                  <p className="mt-3 text-sm text-slate-600">{course.departmentName}</p>
+                  <div className="mt-4 flex gap-3 text-sm text-slate-500">
                     <span>{course.topicCount} topics</span>
                     <span>{course.materialCount} materials</span>
                   </div>

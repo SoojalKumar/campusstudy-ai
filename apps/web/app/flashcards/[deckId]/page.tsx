@@ -11,10 +11,10 @@ import { useAuthedQuery } from "@/lib/api-hooks";
 import { useSession } from "@/lib/session";
 
 const reviewActions = [
-  { label: "Again", rating: 1, helper: "Back tomorrow", className: "border-rose-300/20 bg-rose-400/10 text-rose-100" },
-  { label: "Hard", rating: 2, helper: "Short spacing", className: "border-ember/25 bg-ember/10 text-orange-100" },
-  { label: "Good", rating: 4, helper: "Extend spacing", className: "border-tide/25 bg-tide/10 text-cyan-100" },
-  { label: "Easy", rating: 5, helper: "Long spacing", className: "border-emerald-300/20 bg-emerald-400/10 text-emerald-100" }
+  { label: "Again", rating: 1, helper: "Back tomorrow", className: "border-rose-200 bg-rose-50 text-rose-700" },
+  { label: "Hard", rating: 2, helper: "Short spacing", className: "border-ember/25 bg-[var(--ember-soft)] text-ember" },
+  { label: "Good", rating: 4, helper: "Extend spacing", className: "border-tide/25 bg-[var(--accent-soft)] text-tide" },
+  { label: "Easy", rating: 5, helper: "Long spacing", className: "border-emerald-200 bg-emerald-50 text-emerald-700" }
 ] as const;
 
 function isDue(card: FlashcardDTO) {
@@ -79,12 +79,12 @@ export default function FlashcardDeckPage() {
   if (!deck && deckQuery.hydrated) {
     return (
       <LayoutShell>
-        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8">
+        <div className="rounded-[2.5rem] border border-[var(--line)] bg-[var(--panel)] p-8">
           <p className="text-xs uppercase tracking-[0.35em] text-gold">Spaced Repetition</p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">
+          <h1 className="mt-3 text-3xl font-semibold text-ink">
             {deckQuery.hasSession ? "Deck not found" : "Sign in to review flashcards"}
           </h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
             Flashcard decks are generated from your uploaded materials and synced to your account.
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function FlashcardDeckPage() {
   if (!deck) {
     return (
       <LayoutShell>
-        <div className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-8 text-sm text-slate-300">
+        <div className="rounded-[2.5rem] border border-[var(--line)] bg-[var(--panel)] p-8 text-sm text-slate-600">
           Loading flashcards...
         </div>
       </LayoutShell>
@@ -105,11 +105,11 @@ export default function FlashcardDeckPage() {
   return (
     <LayoutShell>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-6">
+        <section className="rounded-[2.5rem] border border-[var(--line)] bg-[var(--panel)] p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gold">Spaced Repetition</p>
-              <h1 className="mt-3 max-w-2xl text-3xl font-semibold text-white">{deck.title}</h1>
+              <h1 className="mt-3 max-w-2xl text-3xl font-semibold text-ink">{deck.title}</h1>
             </div>
             <div className="rounded-full border border-tide/20 bg-tide/10 px-4 py-2 text-sm font-semibold text-tide">
               {dueCards.length} due
@@ -117,19 +117,19 @@ export default function FlashcardDeckPage() {
           </div>
 
           {deckQuery.isError ? (
-            <p className="mt-4 rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 text-sm text-orange-100">
+            <p className="mt-4 rounded-2xl border border-ember/20 bg-[var(--ember-soft)] px-4 py-3 text-sm text-ember">
               This deck could not load. Refresh or open a deck from your dashboard.
             </p>
           ) : null}
 
-          <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
+          <div className="mt-6 rounded-[2rem] border border-[var(--line)] bg-white p-5">
             <div className="flex items-center justify-between gap-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Review progress</p>
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Review progress</p>
+              <p className="text-sm font-semibold text-ink">
                 {completedCount}/{deck.flashcards.length}
               </p>
             </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/5">
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-50">
               <div className="h-full rounded-full bg-tide transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function FlashcardDeckPage() {
           {activeCard ? (
             <div className="mt-6">
               <button
-                className="group min-h-[360px] w-full rounded-[2.5rem] border border-tide/20 bg-gradient-to-br from-tide/20 via-slate-950/70 to-slate-950 p-8 text-left shadow-2xl shadow-black/20 transition hover:-translate-y-1 hover:border-tide/40"
+                className="group min-h-[360px] w-full rounded-[2.5rem] border border-tide/20 bg-white p-8 text-left shadow-2xl shadow-slate-200/70 transition hover:-translate-y-1 hover:border-tide/40"
                 onClick={() => setRevealed((value) => !value)}
                 type="button"
               >
@@ -145,19 +145,19 @@ export default function FlashcardDeckPage() {
                   <span className="text-xs font-semibold uppercase tracking-[0.35em] text-gold">
                     {revealed ? "Back" : "Front"}
                   </span>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
+                  <span className="rounded-full border border-[var(--line)] bg-slate-50 px-3 py-1 text-xs text-slate-600">
                     {formatDue(activeCard.dueAt)}
                   </span>
                 </div>
-                <p className="mt-14 text-3xl font-semibold leading-tight text-white md:text-4xl">
+                <p className="mt-14 text-3xl font-semibold leading-tight text-ink md:text-4xl">
                   {revealed ? activeCard.back : activeCard.front}
                 </p>
                 {revealed && activeCard.explanation ? (
-                  <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">{activeCard.explanation}</p>
+                  <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-600">{activeCard.explanation}</p>
                 ) : null}
                 <div className="mt-10 flex flex-wrap gap-2">
                   {activeCard.tags.map((tag) => (
-                    <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
+                    <span key={tag} className="rounded-full border border-[var(--line)] bg-slate-50 px-3 py-1 text-xs text-slate-600">
                       {tag}
                     </span>
                   ))}
@@ -166,7 +166,7 @@ export default function FlashcardDeckPage() {
 
               {!revealed ? (
                 <button
-                  className="mt-4 w-full rounded-2xl bg-white px-5 py-4 text-sm font-semibold text-slate-950 transition hover:bg-tide"
+                  className="mt-4 w-full rounded-2xl bg-white px-5 py-4 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)]"
                   onClick={() => setRevealed(true)}
                   type="button"
                 >
@@ -191,8 +191,8 @@ export default function FlashcardDeckPage() {
             </div>
           ) : (
             <div className="mt-6 rounded-[2.5rem] border border-tide/20 bg-tide/10 p-8">
-              <p className="text-2xl font-semibold text-white">Review sprint complete</p>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
+              <p className="text-2xl font-semibold text-ink">Review sprint complete</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 All due cards are handled. The next session will reopen cards based on their spacing interval.
               </p>
             </div>
@@ -200,11 +200,11 @@ export default function FlashcardDeckPage() {
         </section>
 
         <aside className="grid gap-6">
-          <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
+          <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.25em] text-tide">Deck Queue</p>
-                <h2 className="mt-2 text-xl font-semibold text-white">Due and upcoming cards</h2>
+                <h2 className="mt-2 text-xl font-semibold text-ink">Due and upcoming cards</h2>
               </div>
               <span className="text-sm font-semibold text-gold">{progress}%</span>
             </div>
@@ -214,7 +214,7 @@ export default function FlashcardDeckPage() {
                 const status = reviewedIds.has(card.id) ? "Done" : isDue(card) ? "Due" : "Later";
                 return (
                   <button
-                    className="w-full rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left transition hover:border-tide/30 hover:bg-slate-900"
+                    className="w-full rounded-2xl border border-[var(--line)] bg-white p-4 text-left transition hover:border-tide/30 hover:bg-slate-50"
                     key={card.id}
                     onClick={() => {
                       if (cardIndex >= 0) {
@@ -225,12 +225,12 @@ export default function FlashcardDeckPage() {
                     type="button"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-medium text-white">{card.front}</p>
-                      <span className={status === "Done" ? "text-xs font-semibold text-emerald-200" : "text-xs font-semibold text-gold"}>
+                      <p className="font-medium text-ink">{card.front}</p>
+                      <span className={status === "Done" ? "text-xs font-semibold text-emerald-700" : "text-xs font-semibold text-gold"}>
                         {status}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm capitalize text-slate-400">
+                    <p className="mt-2 text-sm capitalize text-slate-500">
                       {card.difficulty} - {formatDue(card.dueAt)}
                     </p>
                   </button>
@@ -239,10 +239,10 @@ export default function FlashcardDeckPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
+          <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5">
             <p className="text-xs uppercase tracking-[0.25em] text-ember">Spacing Logic</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">Review quality changes due dates.</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <h2 className="mt-2 text-xl font-semibold text-ink">Review quality changes due dates.</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               Missed cards return tomorrow, solid answers move out, and easy cards stretch further. The backend stores
               each review so the schedule survives across devices.
             </p>

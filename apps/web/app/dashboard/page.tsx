@@ -62,28 +62,37 @@ export default function DashboardPage() {
   return (
     <LayoutShell>
       <div className="grid gap-6">
-        <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-6">
-          <p className="text-xs uppercase tracking-[0.35em] text-tide">Student Dashboard</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Study this week with structure.</h1>
-          <p className="mt-3 max-w-2xl text-sm text-slate-300">
-            Recent uploads, due flashcards, weak topics, and generated note sets live here.
-          </p>
+        <section className="cs-card p-6 md:p-8">
+          <p className="cs-eyebrow">Student dashboard</p>
+          <div className="mt-3 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+            <div>
+              <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.03em] text-ink">
+                Study this week with structure.
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Recent uploads, due flashcards, weak topics, and generated note sets live here.
+              </p>
+            </div>
+            <Link className="cs-button-secondary inline-flex px-4 py-3 text-sm" href="/courses">
+              View courses
+            </Link>
+          </div>
           {needsSignIn ? (
-            <div className="mt-5 rounded-3xl border border-gold/20 bg-gold/10 p-5">
-              <p className="font-semibold text-white">Sign in to load your study workspace.</p>
-              <p className="mt-2 text-sm text-slate-300">
+            <div className="mt-5 rounded-3xl border border-gold/30 bg-[var(--gold-soft)] p-5">
+              <p className="font-semibold text-ink">Sign in to load your study workspace.</p>
+              <p className="mt-2 text-sm text-slate-600">
                 Dashboard metrics, uploads, due flashcards, quizzes, and chat history are account-scoped.
               </p>
-              <Link className="mt-4 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950" href="/login">
+              <Link className="cs-button-primary mt-4 inline-flex px-5 py-3 text-sm" href="/login">
                 Sign in
               </Link>
             </div>
           ) : null}
-          {isLoading ? <p className="mt-5 text-sm text-slate-400">Loading your dashboard...</p> : null}
+          {isLoading ? <p className="mt-5 text-sm text-slate-500">Loading your dashboard...</p> : null}
           {workspaceError ? (
-            <div className="mt-5 rounded-3xl border border-ember/25 bg-ember/10 p-5">
-              <p className="font-semibold text-white">Workspace could not load.</p>
-              <p className="mt-2 text-sm text-slate-300">{apiErrorMessage(workspaceError)}</p>
+            <div className="mt-5 rounded-3xl border border-ember/25 bg-[var(--ember-soft)] p-5">
+              <p className="font-semibold text-ink">Workspace could not load.</p>
+              <p className="mt-2 text-sm text-slate-700">{apiErrorMessage(workspaceError)}</p>
               <p className="mt-2 text-xs text-slate-500">Check that the API is running at the configured local URL, then refresh this page.</p>
             </div>
           ) : null}
@@ -102,32 +111,37 @@ export default function DashboardPage() {
         </section>
 
         {dashboard ? (
-          <section className="rounded-[2rem] border border-tide/20 bg-tide/10 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-tide">Start here</p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Recommended demo path</h2>
+          <section className="rounded-[2rem] border border-tide/20 bg-[var(--accent-soft)] p-5">
+            <div className="flex flex-col justify-between gap-2 md:flex-row md:items-end">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-tide">Start here</p>
+                <h2 className="mt-2 text-2xl font-semibold text-ink">Recommended demo path</h2>
+              </div>
+              <p className="text-sm text-slate-600">Four quick checks for the pilot walkthrough.</p>
+            </div>
             <div className="mt-4 grid gap-3 md:grid-cols-4">
               {firstUpload ? (
-                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/40" href={`/materials/${firstUpload.id}`}>
-                  <p className="text-sm font-semibold text-white">Open material</p>
-                  <p className="mt-1 text-xs text-slate-400">Check processing status and generated outputs.</p>
+                <Link className="rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-tide/40 hover:shadow-md" href={`/materials/${firstUpload.id}`}>
+                  <p className="text-sm font-semibold text-ink">Open material</p>
+                  <p className="mt-1 text-xs text-slate-500">Check processing status and generated outputs.</p>
                 </Link>
               ) : null}
               {firstNote ? (
-                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-gold/40" href={`/notes/${firstNote.id}`}>
-                  <p className="text-sm font-semibold text-white">Read latest notes</p>
-                  <p className="mt-1 text-xs text-slate-400">Preview the generated study library.</p>
+                <Link className="rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-md" href={`/notes/${firstNote.id}`}>
+                  <p className="text-sm font-semibold text-ink">Read latest notes</p>
+                  <p className="mt-1 text-xs text-slate-500">Preview the generated study library.</p>
                 </Link>
               ) : null}
               {latestDeck ? (
-                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/40" href={`/flashcards/${latestDeck.id}`}>
-                  <p className="text-sm font-semibold text-white">Review cards</p>
-                  <p className="mt-1 text-xs text-slate-400">Run the spaced-repetition loop.</p>
+                <Link className="rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-tide/40 hover:shadow-md" href={`/flashcards/${latestDeck.id}`}>
+                  <p className="text-sm font-semibold text-ink">Review cards</p>
+                  <p className="mt-1 text-xs text-slate-500">Run the spaced-repetition loop.</p>
                 </Link>
               ) : null}
               {latestQuiz ? (
-                <Link className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-gold/40" href={`/quizzes/${latestQuiz.id}`}>
-                  <p className="text-sm font-semibold text-white">Take quiz</p>
-                  <p className="mt-1 text-xs text-slate-400">Verify scoring and weak-topic feedback.</p>
+                <Link className="rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-md" href={`/quizzes/${latestQuiz.id}`}>
+                  <p className="text-sm font-semibold text-ink">Take quiz</p>
+                  <p className="mt-1 text-xs text-slate-500">Verify scoring and weak-topic feedback.</p>
                 </Link>
               ) : null}
             </div>
@@ -144,24 +158,24 @@ export default function DashboardPage() {
               <div className="grid gap-3">
                 {latestDeck ? (
                   <Link
-                    className="rounded-2xl border border-tide/20 bg-tide/10 p-4 transition hover:-translate-y-0.5"
+                    className="rounded-2xl border border-tide/20 bg-[var(--accent-soft)] p-4 transition hover:-translate-y-0.5 hover:shadow-sm"
                     href={`/flashcards/${latestDeck.id}`}
                   >
-                    <p className="text-sm font-semibold uppercase tracking-[0.22em] text-tide">Flashcards</p>
-                    <p className="mt-2 font-semibold text-white">{latestDeck.title}</p>
-                    <p className="mt-1 text-sm text-slate-300">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-tide">Flashcards</p>
+                    <p className="mt-2 font-semibold text-ink">{latestDeck.title}</p>
+                    <p className="mt-1 text-sm text-slate-600">
                       {latestDeck.flashcards.length ? `${latestDeck.flashcards.length} cards ready` : "Review deck ready"}
                     </p>
                   </Link>
                 ) : null}
                 {latestQuiz ? (
                   <Link
-                    className="rounded-2xl border border-gold/20 bg-gold/10 p-4 transition hover:-translate-y-0.5"
+                    className="rounded-2xl border border-gold/25 bg-[var(--gold-soft)] p-4 transition hover:-translate-y-0.5 hover:shadow-sm"
                     href={`/quizzes/${latestQuiz.id}`}
                   >
-                    <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold">Quiz</p>
-                    <p className="mt-2 font-semibold text-white">{latestQuiz.title}</p>
-                    <p className="mt-1 text-sm text-slate-300">{latestQuiz.questionCount} questions ready</p>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gold">Quiz</p>
+                    <p className="mt-2 font-semibold text-ink">{latestQuiz.title}</p>
+                    <p className="mt-1 text-sm text-slate-600">{latestQuiz.questionCount} questions ready</p>
                   </Link>
                 ) : null}
                 {!latestDeck && !latestQuiz ? (
@@ -171,7 +185,7 @@ export default function DashboardPage() {
                   />
                 ) : null}
                 <button
-                  className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm font-semibold text-white transition hover:border-tide/30"
+                  className="rounded-2xl border border-[var(--line)] bg-white p-4 text-sm font-semibold text-ink transition hover:border-tide/30 hover:shadow-sm"
                   disabled={!token || createChatMutation.isPending}
                   onClick={() => createChatMutation.mutate()}
                   type="button"
@@ -179,7 +193,7 @@ export default function DashboardPage() {
                   {createChatMutation.isPending ? "Starting chat..." : "Open source-grounded chat"}
                 </button>
                 {createChatMutation.isError ? (
-                  <p className="text-sm text-rose-200">{apiErrorMessage(createChatMutation.error)}</p>
+                  <p className="text-sm text-rose-700">{apiErrorMessage(createChatMutation.error)}</p>
                 ) : null}
               </div>
             </SectionCard>
@@ -187,12 +201,12 @@ export default function DashboardPage() {
             <SectionCard title="Weak Topics" eyebrow="Revision Radar">
               <div className="space-y-3">
                 {dashboard?.weakTopics.length ? dashboard.weakTopics.map((item) => (
-                  <div key={item.topic} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                  <div key={item.topic} className="rounded-2xl border border-[var(--line)] bg-white p-4">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-white">{item.topic}</p>
-                      <span className="text-sm text-amber-200">{Math.round(item.mastery * 100)}%</span>
+                      <p className="font-medium text-ink">{item.topic}</p>
+                      <span className="text-sm font-semibold text-gold">{Math.round(item.mastery * 100)}%</span>
                     </div>
-                    <div className="mt-3 h-2 rounded-full bg-white/5">
+                    <div className="mt-3 h-2 rounded-full bg-slate-100">
                       <div className="h-full rounded-full bg-ember" style={{ width: `${item.mastery * 100}%` }} />
                     </div>
                   </div>
@@ -209,14 +223,14 @@ export default function DashboardPage() {
             {dashboard?.recentUploads.length ? dashboard.recentUploads.map((upload) => (
               <Link
                 key={upload.id}
-                className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/30"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:shadow-sm"
                 href={`/materials/${upload.id}`}
               >
                 <div>
-                  <p className="font-medium text-white">{upload.title}</p>
-                  <p className="text-sm text-slate-400">{upload.courseTitle}</p>
+                  <p className="font-medium text-ink">{upload.title}</p>
+                  <p className="text-sm text-slate-500">{upload.courseTitle}</p>
                 </div>
-                <span className="rounded-full bg-tide/15 px-3 py-1 text-sm text-tide">{upload.status}</span>
+                <span className="shrink-0 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-medium text-tide">{upload.status}</span>
               </Link>
             )) : (
               <EmptyState
@@ -232,12 +246,12 @@ export default function DashboardPage() {
             {dashboard?.latestNotes.length ? dashboard.latestNotes.map((note) => (
               <Link
                 key={note.id}
-                className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-gold/30"
+                className="rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-gold/30 hover:shadow-sm"
                 href={`/notes/${note.id}`}
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{formatNoteTypeLabel(note.noteType)}</p>
-                <p className="mt-2 font-medium text-white">{note.title}</p>
-                <p className="mt-2 line-clamp-3 text-sm text-slate-400">{note.contentMarkdown}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{formatNoteTypeLabel(note.noteType)}</p>
+                <p className="mt-2 font-medium text-ink">{note.title}</p>
+                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{note.contentMarkdown}</p>
               </Link>
             )) : (
               <EmptyState

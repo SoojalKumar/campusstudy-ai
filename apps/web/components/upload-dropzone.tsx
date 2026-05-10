@@ -52,8 +52,8 @@ export function UploadDropzone({
       }}
       className={`group w-full rounded-[2rem] border border-dashed p-8 text-left transition ${
         isDragging
-          ? "border-tide bg-white/10 shadow-2xl shadow-cyan-950/20"
-          : "border-white/20 bg-white/5 hover:border-tide/60 hover:bg-white/10"
+          ? "border-tide bg-[var(--accent-soft)] shadow-xl shadow-slate-300/40"
+          : "border-[var(--line-strong)] bg-[var(--panel-muted)] hover:border-tide hover:bg-white"
       }`}
     >
       <input
@@ -64,11 +64,11 @@ export function UploadDropzone({
           applyFile(event.target.files?.[0] ?? null);
         }}
       />
-      <p className="text-xs uppercase tracking-[0.35em] text-gold">Upload Workspace</p>
-      <h3 className="mt-3 text-2xl font-semibold text-white">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">Upload workspace</p>
+      <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-ink">
         {isDragging ? "Drop the file to queue processing." : "Drag files here or browse your course pack."}
       </h3>
-      <p className="mt-3 text-sm text-slate-300">{selectedLabel ?? fileName}</p>
+      <p className="mt-3 text-sm text-slate-600">{selectedLabel ?? fileName}</p>
       <p className="mt-2 text-xs text-slate-500">
         Supports PDF, slides, docs, markdown, audio, and lecture video uploads.
       </p>

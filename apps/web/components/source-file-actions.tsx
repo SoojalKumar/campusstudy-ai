@@ -79,7 +79,7 @@ export function SourceFileActions({
         type="button"
         onClick={openSource}
         disabled={status !== "idle"}
-        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+        className="cs-button-secondary px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === "opening" ? "Opening source..." : "Open original source"}
       </button>
@@ -87,11 +87,11 @@ export function SourceFileActions({
         type="button"
         onClick={downloadSource}
         disabled={status !== "idle"}
-        className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+        className="cs-button-primary px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === "downloading" ? "Downloading..." : "Download file"}
       </button>
-      {error ? <p className="basis-full text-sm text-rose-300">{error}</p> : null}
+      {error ? <p className="basis-full text-sm text-rose-700">{error}</p> : null}
     </div>
   );
 }
@@ -138,7 +138,7 @@ export function SourceTimestampButton({
       type="button"
       onClick={openAtTimestamp}
       disabled={isOpening}
-      className="text-xs font-medium text-tide transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+      className="text-xs font-semibold text-tide transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
     >
       {isOpening ? "Opening..." : "Open at timestamp"}
     </button>

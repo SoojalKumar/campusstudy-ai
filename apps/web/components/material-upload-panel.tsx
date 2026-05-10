@@ -59,13 +59,13 @@ export function MaterialUploadPanel({ courses }: MaterialUploadPanelProps) {
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white"
+          className="cs-input px-4 py-3"
           placeholder="Material title"
         />
         <select
           value={courseId}
           onChange={(event) => setCourseId(event.target.value)}
-          className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white"
+          className="cs-input px-4 py-3"
         >
           {courseOptions.map((course) => (
             <option key={course.id} value={course.id}>
@@ -75,7 +75,7 @@ export function MaterialUploadPanel({ courses }: MaterialUploadPanelProps) {
         </select>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm leading-6 text-slate-600">
           {hasSession
             ? "Upload starts the full extraction, chunking, embedding, and study asset pipeline."
             : "Sign in first to upload materials into the processing pipeline."}
@@ -84,16 +84,20 @@ export function MaterialUploadPanel({ courses }: MaterialUploadPanelProps) {
           type="button"
           onClick={() => uploadMutation.mutate()}
           disabled={!hasSession || !courseId || uploadMutation.isPending}
-          className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-500"
+          className="cs-button-primary px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
         >
           {uploadMutation.isPending ? "Uploading..." : "Start Processing"}
         </button>
       </div>
       {uploadMutation.error ? (
-        <p className="text-sm text-rose-300">{apiErrorMessage(uploadMutation.error)}</p>
+        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {apiErrorMessage(uploadMutation.error)}
+        </p>
       ) : null}
       {uploadMutation.isSuccess ? (
-        <p className="text-sm text-tide">Upload queued successfully. Refresh or open the material later.</p>
+        <p className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          Upload queued successfully. Refresh or open the material later.
+        </p>
       ) : null}
     </div>
   );

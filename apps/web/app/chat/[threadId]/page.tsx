@@ -121,14 +121,14 @@ export default function ChatThreadPage() {
   return (
     <LayoutShell>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <section className="rounded-[2.5rem] border border-white/10 bg-[var(--panel)] p-6">
+        <section className="rounded-[2.5rem] border border-[var(--line)] bg-[var(--panel)] p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-tide">RAG Chat</p>
-              <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-white">
+              <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-ink">
                 {thread?.title ?? "Start a source-grounded chat"}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                 Ask questions over uploaded course material with citations, strict-source mode, and exam-ready answer
                 styles.
               </p>
@@ -145,16 +145,16 @@ export default function ChatThreadPage() {
           ) : null}
 
           {shouldShowCreator ? (
-            <div className="mt-6 rounded-[2rem] border border-white/10 bg-slate-950/60 p-5">
+            <div className="mt-6 rounded-[2rem] border border-[var(--line)] bg-white p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.25em] text-gold">
                     Start Real Chat
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">Create a live RAG thread.</h2>
+                  <h2 className="mt-2 text-2xl font-semibold text-ink">Create a live RAG thread.</h2>
                 </div>
                 <button
-                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-tide disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={startDisabled}
                   onClick={() => createThreadMutation.mutate()}
                   type="button"
@@ -163,10 +163,10 @@ export default function ChatThreadPage() {
                 </button>
               </div>
               <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <label className="grid gap-2 text-sm text-slate-300">
+                <label className="grid gap-2 text-sm text-slate-600">
                   Source scope
                   <select
-                    className="rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white"
+                    className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-ink"
                     onChange={(event) => setScopeType(event.target.value as ChatScope)}
                     value={scopeType}
                   >
@@ -175,10 +175,10 @@ export default function ChatThreadPage() {
                     <option value="material">Selected material</option>
                   </select>
                 </label>
-                <label className="grid gap-2 text-sm text-slate-300">
+                <label className="grid gap-2 text-sm text-slate-600">
                   Answer style
                   <select
-                    className="rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white"
+                    className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-ink"
                     onChange={(event) => setAnswerStyle(event.target.value as ChatAnswerStyle)}
                     value={answerStyle}
                   >
@@ -190,10 +190,10 @@ export default function ChatThreadPage() {
                   </select>
                 </label>
                 {scopeType === "course" ? (
-                  <label className="grid gap-2 text-sm text-slate-300 md:col-span-2">
+                  <label className="grid gap-2 text-sm text-slate-600 md:col-span-2">
                     Course
                     <select
-                      className="rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white"
+                      className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-ink"
                       onChange={(event) => setSelectedCourseId(event.target.value)}
                       value={selectedCourseId}
                     >
@@ -207,10 +207,10 @@ export default function ChatThreadPage() {
                   </label>
                 ) : null}
                 {scopeType === "material" ? (
-                  <label className="grid gap-2 text-sm text-slate-300 md:col-span-2">
+                  <label className="grid gap-2 text-sm text-slate-600 md:col-span-2">
                     Material
                     <select
-                      className="rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white"
+                      className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-ink"
                       onChange={(event) => setSelectedMaterialId(event.target.value)}
                       value={selectedMaterialId}
                     >
@@ -224,7 +224,7 @@ export default function ChatThreadPage() {
                   </label>
                 ) : null}
               </div>
-              <label className="mt-4 flex items-center gap-3 text-sm text-slate-300">
+              <label className="mt-4 flex items-center gap-3 text-sm text-slate-600">
                 <input
                   checked={strictMode}
                   className="size-4 accent-cyan-300"
@@ -234,7 +234,7 @@ export default function ChatThreadPage() {
                 Strictly answer from retrieved source chunks.
               </label>
               {createThreadMutation.isError ? (
-                <p className="mt-4 rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   {(createThreadMutation.error as Error).message}
                 </p>
               ) : null}
@@ -248,19 +248,19 @@ export default function ChatThreadPage() {
                   className={
                     chatMessage.role === "assistant"
                       ? "rounded-3xl border border-tide/30 bg-tide/10 p-5"
-                      : "rounded-3xl bg-slate-950/80 p-5"
+                      : "rounded-3xl bg-white p-5"
                   }
                   key={chatMessage.id}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
                     {chatMessage.role === "assistant" ? "CampusStudy AI" : "You"}
                   </p>
-                  <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-white">{chatMessage.content}</p>
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-ink">{chatMessage.content}</p>
                 </div>
               ))
             ) : (
               thread ? (
-                <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-sm text-slate-300">
+                <div className="rounded-3xl border border-[var(--line)] bg-white p-5 text-sm text-slate-600">
                   This thread is ready. Ask a question and citations will appear beside the answer.
                 </div>
               ) : null
@@ -268,25 +268,25 @@ export default function ChatThreadPage() {
           </div>
 
           <form
-            className="mt-5 rounded-[2rem] border border-white/10 bg-slate-950/60 p-4"
+            className="mt-5 rounded-[2rem] border border-[var(--line)] bg-white p-4"
             onSubmit={(event) => {
               event.preventDefault();
               if (canSend) sendMutation.mutate();
             }}
           >
             <textarea
-              className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-sm leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-tide/50"
+              className="min-h-28 w-full rounded-2xl border border-[var(--line)] bg-white p-4 text-sm leading-6 text-ink outline-none transition placeholder:text-slate-500 focus:border-tide/50"
               disabled={!token || !threadId || !thread}
               onChange={(event) => setMessage(event.target.value)}
               placeholder="Ask about exam traps, lecture concepts, or confusing passages..."
               value={message}
             />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 {thread ? `${thread.answerStyle} mode` : "Start a thread before sending."}
               </p>
               <button
-                className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-tide disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canSend || sendMutation.isPending}
                 type="submit"
               >
@@ -294,31 +294,31 @@ export default function ChatThreadPage() {
               </button>
             </div>
             {sendMutation.isError ? (
-              <p className="mt-3 text-sm text-rose-200">{(sendMutation.error as Error).message}</p>
+              <p className="mt-3 text-sm text-rose-700">{(sendMutation.error as Error).message}</p>
             ) : null}
           </form>
         </section>
 
         <aside className="grid gap-6">
-          <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5">
+          <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5">
             <p className="text-xs uppercase tracking-[0.25em] text-ember">Recent Threads</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">Live conversations</h2>
+            <h2 className="mt-2 text-xl font-semibold text-ink">Live conversations</h2>
             <div className="mt-4 space-y-3">
               {(threadListQuery.data ?? []).length ? (
                 (threadListQuery.data ?? []).map((item) => (
                   <Link
-                    className="block rounded-2xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-tide/30"
+                    className="block rounded-2xl border border-[var(--line)] bg-white p-4 transition hover:border-tide/30"
                     href={`/chat/${item.id}`}
                     key={item.id}
                   >
-                    <p className="font-medium text-white">{item.title}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="font-medium text-ink">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-500">
                       {item.scopeType} - {item.answerStyle}
                     </p>
                   </Link>
                 ))
               ) : (
-                <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-400">
+                <p className="rounded-2xl border border-[var(--line)] bg-white p-4 text-sm text-slate-500">
                   No live threads yet.
                 </p>
               )}
@@ -329,7 +329,7 @@ export default function ChatThreadPage() {
             {citations.length ? (
               citations.map((citation) => <SourceCitationCard key={citation.chunkId} citation={citation} />)
             ) : (
-              <div className="rounded-[2rem] border border-white/10 bg-[var(--panel)] p-5 text-sm text-slate-400">
+              <div className="rounded-[2rem] border border-[var(--line)] bg-[var(--panel)] p-5 text-sm text-slate-500">
                 Citations show up after the assistant retrieves chunks from your uploaded material.
               </div>
             )}
