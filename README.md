@@ -70,6 +70,8 @@ Important values:
 - `LLM_PROVIDER`
 - `LLAMA_API_BASE_URL`
 - `LLAMA_API_KEY`
+- `GROQ_API_KEY`
+- `GROQ_MODEL`
 - `ENABLE_MOCK_AI`
 - `NEXT_PUBLIC_API_BASE_URL`
 - `EXPO_PUBLIC_API_BASE_URL`
@@ -210,6 +212,15 @@ LLAMA_API_KEY=your_key_here
 LLM_MODEL=llama-4-scout
 ```
 
+To point at Groq with a free API key:
+
+```env
+LLM_PROVIDER=groq
+ENABLE_MOCK_AI=false
+GROQ_API_KEY=your_groq_key_here
+GROQ_MODEL=llama-3.1-8b-instant
+```
+
 The application code talks only to provider interfaces, so you can later add self-hosted inference or other campus-specific model backends without changing the study services.
 
 ## Production guardrails
@@ -222,8 +233,27 @@ Required production settings:
 ENVIRONMENT=production
 SECRET_KEY=replace-with-at-least-32-random-characters
 ENABLE_MOCK_AI=false
-LLM_PROVIDER=meta_llama
-LLAMA_API_KEY=your_real_provider_key
+LLM_PROVIDER=groq
+GROQ_API_KEY=your_groq_key_here
+GROQ_MODEL=llama-3.1-8b-instant
+```
+
+Render backend example:
+
+```env
+ENVIRONMENT=production
+SECRET_KEY=long-random-secret
+DATABASE_URL=sqlite:///./campusstudy.db
+LLM_PROVIDER=groq
+ENABLE_MOCK_AI=false
+GROQ_API_KEY=your-groq-key
+GROQ_MODEL=llama-3.1-8b-instant
+```
+
+Vercel frontend example:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=https://campusstudy-ai.onrender.com/api/v1
 ```
 
 If a private pilot deliberately needs mock AI in production, set:
